@@ -34,9 +34,7 @@ export default function Login() {
     try {
       const { message, response, code } = await login({ emailOrPhone: email, password });
       // console.log('API => ' + JSON.stringify(response, null, 2), "MSG " + message, "CODE" + code);
-      Alert.alert("Éxito", message, [
-        { text: "OK", onPress: () => router.replace("/(tabs)") },
-      ]);
+      Alert.alert("Éxito", message);
     } catch (error) {
       Alert.alert("Error", getErrorMessage(error));
     } finally {

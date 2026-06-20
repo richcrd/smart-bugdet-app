@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
@@ -33,11 +33,24 @@ configureHttpAuth({
 
 export default function RootLayout() {
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
+  const status = useAuthStore((state) => state.status);
   const hydrate = useAuthStore((state) => state.hydrate);
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  useEffect(() => {
+    if (!hasHydrated) { 
+      return;
+    }
+    
+    if (status === "authenticated") {
+      router.replace("/(tabs)");
+    } else if (status === "unauthenticated") {
+      router.replace("/(public)");
+    }
+  }, [hasHydrated, status]);
 
   if (!hasHydrated) {
     return null;
