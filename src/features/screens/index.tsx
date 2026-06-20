@@ -19,14 +19,15 @@ export default function HomeScreen() {
 
       <TouchableOpacity
         style={styles.loginButton}
-        onPress={() => router.replace("/(tabs)")}
+        
+        onPress={() => router.push("/login")}
       >
         <Text style={styles.loginText}>Iniciar sesión</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.registerButton}
-        onPress={() => router.push("/(public)/registro")}
+        onPress={() => router.push("/registro")}
       >
         <Text style={styles.registerText}>Crear cuenta</Text>
       </TouchableOpacity>
