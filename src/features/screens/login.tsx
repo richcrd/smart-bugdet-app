@@ -1,12 +1,16 @@
 import { FontAwesome } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
+  Alert,
+  ActivityIndicator,
   View,
   Text,
   TextInput,
   TouchableOpacity,
 } from "react-native";
 import { router } from "expo-router";
+import { useAuthStore } from "@/src/features/stores/auth.store";
+import { getErrorMessage } from "@/src/shared/utils/common";
 import { styles } from "../styles/loginStyles";
 
 export default function Login() {
@@ -15,13 +19,29 @@ export default function Login() {
 
   // Estado para guardar la contraseña
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const login = useAuthStore((state) => state.login);
 
   // Función para el botón Continuar
-  const handleLogin = () => {
-    console.log("Usuario:", email);
-    console.log("Contraseña:", password);
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Campos requeridos", "Ingresa tu correo y contraseña.");
+      return;
+    }
 
-    
+    setLoading(true);
+    try {
+      const { message, response, code } = await login({ emailOrPhone: email, password });
+      // console.log('API => ' + JSON.stringify(response, null, 2), "MSG " + message, "CODE" + code);
+      Alert.alert("Éxito", message, [
+        { text: "OK", onPress: () => router.replace("/(tabs)") },
+      ]);
+    } catch (error) {
+      Alert.alert("Error", getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,14 +71,11 @@ export default function Login() {
         onChangeText={setPassword}
       />
 
-      
-      <TouchableOpacity
-        style={styles.loginButton}
-        onPress={handleLogin}
-      >
-        <Text style={styles.loginButtonText}>
-          Continuar
-        </Text>
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
+        {loading
+          ? <ActivityIndicator color="#FFF" />
+          : <Text style={styles.loginButtonText}>Continuar</Text>
+        }
       </TouchableOpacity>
 
       

@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 import type { AuthSession, LoginRequest } from "@/src/features/data/auth";
 import { authRepository } from "@/src/features/data/auth";
+import type { ApiResponse } from "@/src/shared/http/types";
 import { secureStore } from "@/src/shared/storage/secureJson";
 import { STORAGE_KEYS } from "@/src/shared/storage/storageKeys";
 
@@ -13,7 +14,7 @@ type AuthStore = {
   accessToken: string | null;
   refreshToken: string | null;
   hydrate(): Promise<void>;
-  login(request: LoginRequest): Promise<void>;
+  login(request: LoginRequest): Promise<ApiResponse<AuthSession>>;
   setSession(session: AuthSession): Promise<void>;
   clearSession(): Promise<void>;
   logout(): Promise<void>;
@@ -35,23 +36,19 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({
         accessToken,
         refreshToken,
-        status:
-          accessToken && refreshToken ? "authenticated" : "unauthenticated",
+        status: accessToken && refreshToken ? "authenticated" : "unauthenticated",
       });
     } catch {
-      set({
-        accessToken: null,
-        refreshToken: null,
-        status: "unauthenticated",
-      });
+      set({ accessToken: null, refreshToken: null, status: "unauthenticated" });
     } finally {
       set({ hasHydrated: true });
     }
   },
 
   async login(request) {
-    const session = await authRepository.login(request);
-    await get().setSession(session);
+    const result = await authRepository.login(request);
+    await get().setSession(result.response);
+    return result;
   },
 
   async setSession(session) {
@@ -73,23 +70,17 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       secureStore.remove(STORAGE_KEYS.auth.refreshToken),
     ]);
 
-    set({
-      accessToken: null,
-      refreshToken: null,
-      status: "unauthenticated",
-    });
+    set({ accessToken: null, refreshToken: null, status: "unauthenticated" });
   },
 
   async logout() {
     const refreshToken = get().refreshToken;
-
     try {
       if (refreshToken) {
         await authRepository.logout(refreshToken);
-
-        const rotatedRefreshToken = get().refreshToken;
-        if (rotatedRefreshToken && rotatedRefreshToken !== refreshToken) {
-          await authRepository.logout(rotatedRefreshToken);
+        const rotated = get().refreshToken;
+        if (rotated && rotated !== refreshToken) {
+          await authRepository.logout(rotated);
         }
       }
     } finally {

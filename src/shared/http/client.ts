@@ -28,18 +28,29 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
+  const url = `${config.baseURL ?? ""}${config.url ?? ""}`;
+  console.log(`-> ${config.method?.toUpperCase()} ${url}`);
+
   return config;
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const url = `${response.config.baseURL ?? ""}${response.config.url ?? ""}`;
+    console.log(`<- ${response.status} ${url}`);
+    return response;
+  },
   async (error: AxiosError) => {
     const request = error.config as
       | (InternalAxiosRequestConfig & { _retry?: boolean })
       | undefined;
 
+    const url = `${request?.baseURL ?? ""}${request?.url ?? ""}`;
+    console.log(`<- ${error.response?.status ?? 0} ${url}`);
+
     if (!request || error.response?.status !== 401 || request._retry || !auth) {
-      throw error;
+      const message = (error.response?.data as { message?: string })?.message;
+      throw message ? new Error(message) : error;
     }
 
     request._retry = true;

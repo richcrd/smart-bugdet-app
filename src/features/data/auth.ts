@@ -1,8 +1,7 @@
 import { create } from "axios";
 
 import { ENV } from "@/src/config/env";
-import { requests } from "@/src/shared/http/endpoints";
-import { post } from "@/src/shared/http/requests";
+import { http } from "@/src/shared/http/requests";
 import type { ApiResponse } from "@/src/shared/http/types";
 
 export type LoginRequest = {
@@ -48,24 +47,21 @@ const refreshClient = create({
 
 export const authRepository = {
   login: (body: LoginRequest) =>
-    post<AuthSession, LoginRequest>(requests.auth.login, body),
+    http.post<AuthSession>("/service/auth/login", body),
 
   register: (body: RegisterRequest) =>
-    post<RegisterResponse, RegisterRequest>(requests.auth.register, body),
+    http.post<RegisterResponse>("/service/auth/register", body),
 
   async refresh(refreshToken: string): Promise<AuthSession> {
     const { data } = await refreshClient.post<ApiResponse<AuthSession>>(
-      requests.auth.refresh,
+      "/service/auth/refresh",
       { refreshToken },
     );
-
     return data.response;
   },
 
   logout: (refreshToken: string) =>
-    post<null, { refreshToken: string }>(requests.auth.logout, {
-      refreshToken,
-    }),
+    http.post<null>("/service/auth/logout", { refreshToken }),
 
-  logoutAll: () => post<null>(requests.auth.logoutAll),
+  logoutAll: () => http.post<null>("/service/auth/logout-all"),
 };
