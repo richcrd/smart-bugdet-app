@@ -69,8 +69,22 @@ socialText: {
   createAccountText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#FFF",
+    color: "#f9f6f6",
   },
+passwordContainer: {
+  flexDirection: "row",
+  alignItems: "center",
+  borderWidth: 1,
+  borderColor: "#DDD",
+  borderRadius: 8,
+  paddingHorizontal: 10,
+  marginBottom: 15,
+  backgroundColor: "#FFF",
+},
 
+passwordInput: {
+  flex: 1,
+  height: 50,
+},
   
 });

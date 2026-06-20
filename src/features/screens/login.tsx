@@ -1,5 +1,6 @@
 import { FontAwesome } from "@expo/vector-icons";
 import React, { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import {
   Alert,
   ActivityIndicator,
@@ -22,6 +23,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const login = useAuthStore((state) => state.login);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Función para el botón Continuar
   const handleLogin = async () => {
@@ -59,24 +61,29 @@ export default function Login() {
         placeholderTextColor="#999"
         value={email}
         onChangeText={setEmail}
+        autoCapitalize="none"
       />
-
       {/* Campo Contraseña */}
-      <TextInput
-        style={styles.input}
-        placeholder="Contraseña"
-        placeholderTextColor="#999"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+<View style={styles.passwordContainer}>
+  <TextInput
+    style={styles.passwordInput}
+    placeholder="Contraseña"
+    placeholderTextColor="#999"
+    secureTextEntry={!showPassword}
+    value={password}
+    onChangeText={setPassword}
+  />
 
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
-        {loading
-          ? <ActivityIndicator color="#FFF" />
-          : <Text style={styles.loginButtonText}>Continuar</Text>
-        }
-      </TouchableOpacity>
+  <TouchableOpacity
+    onPress={() => setShowPassword(!showPassword)}
+  >
+    <Ionicons
+      name={showPassword ? "eye-off" : "eye"}
+      size={24}
+      color="#666"
+    />
+  </TouchableOpacity>
+</View>
 
       
       <Text style={styles.separatorText}>
