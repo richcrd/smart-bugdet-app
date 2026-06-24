@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import {
   Alert,
   ScrollView,
@@ -6,6 +7,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 
 
@@ -13,6 +16,7 @@ import { styles } from "../styles/registerStyles";
 import { useRegister } from "../hooks/useRegistre";
 import { router } from "expo-router";
 import { getErrorMessage } from "@/src/shared/utils/common";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function Registro() {
   // Datos de People
@@ -24,7 +28,10 @@ export default function Registro() {
   const [userName, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-
+  // Estado para manejar el DatePicker
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  
   // Seguridad
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -60,10 +67,13 @@ export default function Registro() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
     >
+    <ScrollView contentContainerStyle={styles.container}
+    showsVerticalScrollIndicator={false}
+    keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>
         Crear Cuenta
       </Text>
@@ -82,12 +92,46 @@ export default function Registro() {
         onChangeText={setLastName}
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Fecha de nacimiento"
-        value={birthDate}
-        onChangeText={setBirthDate}
-      />
+      <TouchableOpacity
+  style={styles.dateContainer}
+  onPress={() => setShowDatePicker(true)}
+>
+  <Text style={styles.dateText}>
+    {birthDate || "Seleccione fecha de nacimiento"}
+  </Text>
+
+  <Ionicons
+    name="calendar-outline"
+    size={22}
+    color="#34a545"
+  style={{ marginLeft: "auto" }}  
+  />
+</TouchableOpacity>
+
+{showDatePicker && (
+  <DateTimePicker
+    value={selectedDate}
+    mode="date"
+    display="default"
+    maximumDate={new Date()}
+    onChange={(event, date) => {
+      setShowDatePicker(false);
+
+      if (date) {
+        setSelectedDate(date);
+
+        const formattedDate =
+          `${date.getFullYear()}-${
+            String(date.getMonth() + 1).padStart(2, "0")
+          }-${
+            String(date.getDate()).padStart(2, "0")
+          }`;
+
+        setBirthDate(formattedDate);
+      }
+    }}
+  />
+)}
 
       <TextInput
         style={styles.input}
@@ -139,5 +183,6 @@ export default function Registro() {
         </Text>
       </TouchableOpacity>
     </ScrollView>
+     </KeyboardAvoidingView>
   );
 }
