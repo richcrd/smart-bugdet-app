@@ -8,6 +8,8 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { router } from "expo-router";
 import { useAuthStore } from "@/src/features/stores/auth.store";
@@ -36,7 +38,9 @@ export default function Login() {
     try {
       const { message, response, code } = await login({ emailOrPhone: email, password });
       // console.log('API => ' + JSON.stringify(response, null, 2), "MSG " + message, "CODE" + code);
-      Alert.alert("Éxito", message);
+      Alert.alert("Éxito", message, [
+        { text: "OK", onPress: () => router.replace("/(tabs)") },
+      ]);
     } catch (error) {
       Alert.alert("Error", getErrorMessage(error));
     } finally {
@@ -45,6 +49,7 @@ export default function Login() {
   };
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
     <View style={styles.container}>
       {/* Título */}
       <Text style={styles.title}>
@@ -79,17 +84,32 @@ export default function Login() {
       name={showPassword ? "eye-off" : "eye"}
       size={24}
       color="#666"
-    />
+    /> 
   </TouchableOpacity>
 </View>
 
+      {/* Botón Continuar */}
+      <TouchableOpacity
+        style={styles.loginButton}    
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#FFF" />
+        ) : (
+          <Text style={styles.loginButtonText}>
+            Continuar
+          </Text>
+        )}
+      </TouchableOpacity>
       
+      {/* Separador 
       <Text style={styles.separatorText}>
         También puedes iniciar sesión con:
-      </Text>
+      </Text>*/}
 
       
-<TouchableOpacity style={styles.socialButton}>
+{/*<TouchableOpacity style={styles.socialButton}>
   <FontAwesome name="google" size={24} color="#DB4437" />
 
   <Text style={styles.socialText}>
@@ -104,7 +124,7 @@ export default function Login() {
   <Text style={styles.socialText}>
     Iniciar sesión con Facebook
   </Text>
-</TouchableOpacity>
+</TouchableOpacity>*/}
 
 {/* Botón Crear Cuenta */}
       <TouchableOpacity
@@ -123,5 +143,6 @@ export default function Login() {
       
   
       </View>
+       </TouchableWithoutFeedback>
   );
 }
