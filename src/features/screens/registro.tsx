@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  Alert,
   ScrollView,
   Text,
   TextInput,
@@ -7,7 +8,11 @@ import {
   View,
 } from "react-native";
 
+
 import { styles } from "../styles/registerStyles";
+import { useRegister } from "../hooks/useRegistre";
+import { router } from "expo-router";
+import { getErrorMessage } from "@/src/shared/utils/common";
 
 export default function Registro() {
   // Datos de People
@@ -16,15 +21,15 @@ export default function Registro() {
   const [birthDate, setBirthDate] = useState("");
 
   // Datos de Users
-  const [username, setUsername] = useState("");
+  const [userName, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
 
   // Seguridad
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  const handleRegister = () => {
+  const registerMutation = useRegister();
+  const handleRegister = async () => {
     // Validar que las contraseñas coincidan
     if (password !== confirmPassword) {
       alert("Las contraseñas no coinciden");
@@ -35,15 +40,23 @@ export default function Registro() {
       firstName,
       lastName,
       birthDate,
-      username,
+      userName,
       email,
       phoneNumber,
       password,
     };
+      
+    try {
+          const { message, response, code } = await registerMutation.mutateAsync(registerData);
+          // console.log('API => ' + JSON.stringify(response, null, 2), "MSG " + message, "CODE" + code);
+          Alert.alert("Éxito", message, [
+            { text: "OK", onPress: () => router.replace("/login") },
+          ]);
+        } catch (error) {
+          Alert.alert("Error", getErrorMessage(error));
+        }
 
-    console.log("Datos del formulario:", registerData);
-
-    alert("Formulario listo para conectar al backend");
+   
   };
 
   return (
@@ -79,7 +92,7 @@ export default function Registro() {
       <TextInput
         style={styles.input}
         placeholder="Nombre de usuario"
-        value={username}
+        value={userName}
         onChangeText={setUsername}
       />
 
@@ -105,6 +118,7 @@ export default function Registro() {
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        autoCapitalize="none"
       />
 
       <TextInput
@@ -113,6 +127,7 @@ export default function Registro() {
         secureTextEntry
         value={confirmPassword}
         onChangeText={setConfirmPassword}
+        autoCapitalize="none"
       />
 
       <TouchableOpacity

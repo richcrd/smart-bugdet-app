@@ -75,6 +75,7 @@ export default function Login() {
     secureTextEntry={!showPassword}
     value={password}
     onChangeText={setPassword}
+    autoCapitalize="none"
   />
 
   <TouchableOpacity
