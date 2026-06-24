@@ -83,6 +83,13 @@ export default function Login() {
   </TouchableOpacity>
 </View>
 
+    <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
+    {loading
+      ? <ActivityIndicator color="#FFF" />
+      : <Text style={styles.loginButtonText}>Continuar</Text>
+    }
+    </TouchableOpacity>
+
       
       <Text style={styles.separatorText}>
         También puedes iniciar sesión con:
