@@ -21,23 +21,30 @@ export function configureHttpAuth(handlers: AuthHandlers) {
   auth = handlers;
 }
 
+const paths = ["/service/auth/login", "/service/auth/register"];
+
 api.interceptors.request.use((config) => {
+  const isPublic = paths.some((path) => config.url?.startsWith(path));
   const token = auth?.getAccessToken();
 
-  if (token) {
+  if (token && !isPublic) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  const url = `${config.baseURL ?? ""}${config.url ?? ""}`;
-  console.log(`-> ${config.method?.toUpperCase()} ${url}`);
+  if (__DEV__) {
+    const url = `${config.baseURL ?? ""}${config.url ?? ""}`;
+    console.log(`-> ${config.method?.toUpperCase()} ${url}`);
+  }
 
   return config;
 });
 
 api.interceptors.response.use(
   (response) => {
-    const url = `${response.config.baseURL ?? ""}${response.config.url ?? ""}`;
-    console.log(`<- ${response.status} ${url}`);
+    if (__DEV__) {
+      const url = `${response.config.baseURL ?? ""}${response.config.url ?? ""}`;
+      console.log(`<- ${response.status} ${url}`);
+    }
     return response;
   },
   async (error: AxiosError) => {
@@ -45,8 +52,10 @@ api.interceptors.response.use(
       | (InternalAxiosRequestConfig & { _retry?: boolean })
       | undefined;
 
-    const url = `${request?.baseURL ?? ""}${request?.url ?? ""}`;
-    console.log(`<- ${error.response?.status ?? 0} ${url}`);
+    if (__DEV__) {
+      const url = `${request?.baseURL ?? ""}${request?.url ?? ""}`;
+      console.log(`<- ${error.response?.status ?? 0} ${url}`);
+    }
 
     if (!request || error.response?.status !== 401 || request._retry || !auth) {
       const message = (error.response?.data as { message?: string })?.message;
