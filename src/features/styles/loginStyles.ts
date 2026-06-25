@@ -21,7 +21,23 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#c2bdbdd5",
+    
+
   },
+
+  passwordContainer: {
+  flexDirection: "row",
+  alignItems: "center",
+  borderWidth: 1,
+  borderColor: "#c2bdbdd5",
+  borderRadius: 8,
+  paddingHorizontal: 10,
+  marginBottom: 15,
+  backgroundColor: "#F3F4F6",
+},
+
 
   loginButton: {
     backgroundColor: "#57B52C",
@@ -64,6 +80,7 @@ socialText: {
     padding: 18,
     borderRadius: 30,
     alignItems: "center",
+    marginTop: 20,
   },
 
   createAccountText: {
@@ -71,16 +88,6 @@ socialText: {
     fontWeight: "bold",
     color: "#f9f6f6",
   },
-passwordContainer: {
-  flexDirection: "row",
-  alignItems: "center",
-  borderWidth: 1,
-  borderColor: "#DDD",
-  borderRadius: 8,
-  paddingHorizontal: 10,
-  marginBottom: 15,
-  backgroundColor: "#FFF",
-},
 
 passwordInput: {
   flex: 1,

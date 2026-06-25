@@ -36,4 +36,19 @@ export const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 18,
   },
+
+  dateContainer: {
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: "#F3F4F6",
+  borderRadius: 12,
+  padding: 15,
+  marginBottom: 15,
+},
+
+dateText: {
+  marginLeft: 10,
+  color: "#555",
+  fontSize: 16,
+},
 });
