@@ -139,6 +139,7 @@ export default function Home() {
             </View>
           );
         }}
+        ListEmptyComponent={<Text style={{ textAlign: "center" }}>No tienes transacciones para mostrar</Text>}
       />
     </SafeAreaView>
   );
