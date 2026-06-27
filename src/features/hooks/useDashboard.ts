@@ -14,5 +14,6 @@ export function useTransactions() {
     queryKey: ["transaction"],
     queryFn: () => dashboardRepository.transactionsList(),
     select: (data) => data.response,
+    refetchOnMount: true,
   });
 }

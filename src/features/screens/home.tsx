@@ -17,6 +17,7 @@ import {
   UtensilsCrossed,
 } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { formatAmount } from "@/src/shared/utils/common";
 
 const iconMap: Record<string, LucideIcon> = {
   "shopping-cart": ShoppingCart,
@@ -31,7 +32,7 @@ export default function Home() {
   const { data: transaction, isLoading: isTransactionLoading } =
     useTransactions();
 
-  console.log("API ==>", transaction);
+  //console.log("API ==>", transaction);
 
   if (isSummaryLoading || isTransactionLoading) {
     return <ActivityIndicator size="small" color="#fff" />;
@@ -49,7 +50,7 @@ export default function Home() {
           numberOfLines={1}
           adjustsFontSizeToFit
         >
-          C$ {summary?.currentBalance.toFixed(2) ?? 0}
+          C$ {formatAmount(summary?.currentBalance ?? 0)}
         </Text>
       </View>
 
@@ -67,7 +68,7 @@ export default function Home() {
           <View style={styles.summaryContent}>
             <Text style={styles.summaryLabel}>Ingresos</Text>
             <Text style={styles.summaryAmount}>
-              C$ {summary?.totalIncomeMonth.toFixed(2) ?? 0}
+              C$ {formatAmount(summary?.totalIncomeMonth ?? 0)}
             </Text>
           </View>
         </View>
@@ -85,7 +86,7 @@ export default function Home() {
           <View style={styles.summaryContent}>
             <Text style={styles.summaryLabel}>Gastos</Text>
             <Text style={styles.summaryAmount}>
-              C$ {summary?.totalExpenseMonth.toFixed(2) ?? 0}
+              C$ {formatAmount(summary?.totalExpenseMonth ?? 0)}
             </Text>
           </View>
         </View>
@@ -134,7 +135,7 @@ export default function Home() {
                 ]}
               >
                 {item.transactionTypeCode === "EXPENSE" ? "-" : "+"}
-                C$ {item.amount.toFixed(2)}
+                C$ {formatAmount(item.amount ?? 0)}
               </Text>
             </View>
           );
