@@ -48,7 +48,7 @@ export const styles = StyleSheet.create({
 
 dateText: {
   marginLeft: 10,
-  color: "#555",
+  color: "#888",
   fontSize: 16,
 },
 });

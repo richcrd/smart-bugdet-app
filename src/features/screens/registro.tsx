@@ -9,6 +9,7 @@ import {
   View,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 
 
@@ -35,11 +36,24 @@ export default function Registro() {
   // Seguridad
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false)
+  
   const registerMutation = useRegister();
+  
   const handleRegister = async () => {
+
+    setLoading(true);
     // Validar que las contraseñas coincidan
+    
+    if (firstName === '' || lastName === '') {
+      Alert.alert('El nombre no debe estar vacio');
+      setLoading(false);
+      return;
+    }
+
     if (password !== confirmPassword) {
       alert("Las contraseñas no coinciden");
+      setLoading(false);
       return;
     }
 
@@ -54,16 +68,18 @@ export default function Registro() {
     };
       
     try {
-          const { message, response, code } = await registerMutation.mutateAsync(registerData);
-          // console.log('API => ' + JSON.stringify(response, null, 2), "MSG " + message, "CODE" + code);
-          Alert.alert("Éxito", message, [
-            { text: "OK", onPress: () => router.replace("/login") },
-          ]);
-        } catch (error) {
-          Alert.alert("Error", getErrorMessage(error));
-        }
-
-   
+      const { message, response, code } = await registerMutation.mutateAsync(registerData);
+      // console.log('API => ' + JSON.stringify(response, null, 2), "MSG " + message, "CODE" + code);
+      Alert.alert("Éxito", message, [
+        { text: "OK", onPress: () => router.replace("/login") },
+      ]);
+      setLoading(false);
+    } catch (error) {
+      Alert.alert("Error", getErrorMessage(error));
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,8 +88,8 @@ export default function Registro() {
       style={{ flex: 1 }}
     >
     <ScrollView contentContainerStyle={styles.container}
-    showsVerticalScrollIndicator={false}
-    keyboardShouldPersistTaps="handled">
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>
         Crear Cuenta
       </Text>
@@ -81,6 +97,7 @@ export default function Registro() {
       <TextInput
         style={styles.input}
         placeholder="Nombre"
+        placeholderTextColor="#888"
         value={firstName}
         onChangeText={setFirstName}
       />
@@ -88,54 +105,56 @@ export default function Registro() {
       <TextInput
         style={styles.input}
         placeholder="Apellido"
+        placeholderTextColor="#888"
         value={lastName}
         onChangeText={setLastName}
       />
 
       <TouchableOpacity
-  style={styles.dateContainer}
-  onPress={() => setShowDatePicker(true)}
->
-  <Text style={styles.dateText}>
-    {birthDate || "Seleccione fecha de nacimiento"}
-  </Text>
+        style={styles.dateContainer}
+        onPress={() => setShowDatePicker(true)}
+      >
+        <Text style={styles.dateText}>
+          {birthDate || "Seleccione fecha de nacimiento"}
+        </Text>
 
-  <Ionicons
-    name="calendar-outline"
-    size={22}
-    color="#34a545"
-  style={{ marginLeft: "auto" }}  
-  />
-</TouchableOpacity>
+        <Ionicons
+          name="calendar-outline"
+          size={22}
+          color="#34a545"
+        style={{ marginLeft: "auto" }}  
+        />
+      </TouchableOpacity>
 
-{showDatePicker && (
-  <DateTimePicker
-    value={selectedDate}
-    mode="date"
-    display="default"
-    maximumDate={new Date()}
-    onChange={(event, date) => {
-      setShowDatePicker(false);
-
-      if (date) {
-        setSelectedDate(date);
-
-        const formattedDate =
-          `${date.getFullYear()}-${
-            String(date.getMonth() + 1).padStart(2, "0")
-          }-${
-            String(date.getDate()).padStart(2, "0")
-          }`;
-
-        setBirthDate(formattedDate);
-      }
-    }}
-  />
-)}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          maximumDate={new Date()}
+          onChange={(event, date) => {
+            setShowDatePicker(false);
+          
+            if (date) {
+              setSelectedDate(date);
+            
+              const formattedDate =
+                `${date.getFullYear()}-${
+                  String(date.getMonth() + 1).padStart(2, "0")
+                }-${
+                  String(date.getDate()).padStart(2, "0")
+                }`;
+              
+              setBirthDate(formattedDate);
+            }
+          }}
+        />
+      )}
 
       <TextInput
         style={styles.input}
         placeholder="Nombre de usuario"
+        placeholderTextColor="#888"
         value={userName}
         onChangeText={setUsername}
       />
@@ -143,6 +162,7 @@ export default function Registro() {
       <TextInput
         style={styles.input}
         placeholder="Correo electrónico"
+        placeholderTextColor="#888"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
@@ -151,6 +171,7 @@ export default function Registro() {
       <TextInput
         style={styles.input}
         placeholder="Número de teléfono"
+        placeholderTextColor="#888"
         keyboardType="phone-pad"
         value={phoneNumber}
         onChangeText={setPhoneNumber}
@@ -159,6 +180,7 @@ export default function Registro() {
       <TextInput
         style={styles.input}
         placeholder="Contraseña"
+        placeholderTextColor="#888"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
@@ -168,6 +190,7 @@ export default function Registro() {
       <TextInput
         style={styles.input}
         placeholder="Confirmar contraseña"
+        placeholderTextColor="#888"
         secureTextEntry
         value={confirmPassword}
         onChangeText={setConfirmPassword}
@@ -177,10 +200,15 @@ export default function Registro() {
       <TouchableOpacity
         style={styles.registerButton}
         onPress={handleRegister}
+        disabled={loading}
       >
-        <Text style={styles.registerButtonText}>
-          Crear Cuenta
-        </Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.registerButtonText}>
+            Crear Cuenta
+          </Text>
+        )}
       </TouchableOpacity>
     </ScrollView>
      </KeyboardAvoidingView>
