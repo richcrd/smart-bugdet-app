@@ -1,80 +1,81 @@
+import { createAuthRefresh } from "axios-auth-refresh";
 import { AxiosError, create, InternalAxiosRequestConfig } from "axios";
 import { ENV } from "@/src/config/env";
 
 type AuthHandlers = {
   getAccessToken(): string | null;
-  refreshTokens(): Promise<string>;
-  logout(): Promise<void>;
+  refreshSession(): Promise<string>;
+  onLogout(): Promise<void>;
 };
 
 export const api = create({
   baseURL: ENV.API_BASE_URL,
-  headers: {
-    Accept: "application/json",
-  },
+  headers: { Accept: "application/json" },
 });
 
 let auth: AuthHandlers | null = null;
-let refreshPromise: Promise<string> | null = null;
 
 export function configureHttpAuth(handlers: AuthHandlers) {
   auth = handlers;
 }
 
-const paths = ["/service/auth/login", "/service/auth/register"];
+const PUBLIC_PATHS = ["/service/auth/login", "/service/auth/register"];
 
 api.interceptors.request.use((config) => {
-  const isPublic = paths.some((path) => config.url?.startsWith(path));
+  const isPublic = PUBLIC_PATHS.some((path) => config.url?.startsWith(path));
   const token = auth?.getAccessToken();
 
   if (token && !isPublic) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  if (__DEV__) {
-    const url = `${config.baseURL ?? ""}${config.url ?? ""}`;
-    console.log(`-> ${config.method?.toUpperCase()} ${url}`);
-  }
-
   return config;
 });
 
-api.interceptors.response.use(
-  (response) => {
+api.interceptors.response.use((response) => {
     if (__DEV__) {
-      const url = `${response.config.baseURL ?? ""}${response.config.url ?? ""}`;
-      console.log(`<- ${response.status} ${url}`);
+      console.log(`<- ${response.config.method?.toUpperCase()} ${response.status} ${response.config.baseURL || ""}${response.config.url || ""}`);
     }
     return response;
   },
-  async (error: AxiosError) => {
-    const request = error.config as
-      | (InternalAxiosRequestConfig & { _retry?: boolean })
-      | undefined;
-
+  (error: AxiosError) => {
     if (__DEV__) {
-      const url = `${request?.baseURL ?? ""}${request?.url ?? ""}`;
-      console.log(`<- ${error.response?.status ?? 0} ${url}`);
+      console.log(`<- ${error.response?.status || 0} ${error.config?.baseURL || ""}${error.config?.url || ""}`);
     }
+    return Promise.reject(error);
+  },
+);
 
-    if (!request || error.response?.status !== 401 || request._retry || !auth) {
-      const message = (error.response?.data as { message?: string })?.message;
-      throw message ? new Error(message) : error;
-    }
-
-    request._retry = true;
+createAuthRefresh(api, async () => {
+    const currentAuth = auth!;
 
     try {
-      refreshPromise ??= auth.refreshTokens();
-      const token = await refreshPromise;
-
-      request.headers.Authorization = `Bearer ${token}`;
-      return api(request);
-    } catch (refreshError) {
-      await auth.logout();
-      throw refreshError;
-    } finally {
-      refreshPromise = null;
+      await currentAuth.refreshSession();
+    } catch {
+      await currentAuth.onLogout();
+      throw new Error("Tu sesión expiró. Por favor inicia sesión nuevamente.");
     }
+  },
+  {
+    shouldRefresh: (error: AxiosError) => {
+      if (auth === null) return false;
+
+      const url = error.config?.url || "";
+      const isPublicRoute = PUBLIC_PATHS.some((path) => url.startsWith(path));
+
+      return !isPublicRoute;
+    },
+
+    onRetry: (requestConfig: InternalAxiosRequestConfig) => {
+      const newToken = auth?.getAccessToken();
+
+      if (newToken) {
+        requestConfig.headers["Authorization"] = `Bearer ${newToken}`;
+      }
+
+      return requestConfig;
+    },
+
+    deduplicateRefresh: true,
   },
 );

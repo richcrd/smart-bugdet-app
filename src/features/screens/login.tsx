@@ -36,7 +36,7 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const { message, response, code } = await login({ emailOrPhone: email, password });
+      const { message } = await login({ emailOrPhone: email, password });
       // console.log('API => ' + JSON.stringify(response, null, 2), "MSG " + message, "CODE" + code);
       Alert.alert("Éxito", message, [
         { text: "OK", onPress: () => router.replace("/(tabs)") },

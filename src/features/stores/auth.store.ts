@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 import type { AuthSession, LoginRequest } from "@/src/features/data/auth";
 import { authRepository } from "@/src/features/data/auth";
-import type { ApiResponse } from "@/src/shared/http/types";
+import type { ApiResponse } from "@/src/shared/http/requests";
 import { secureStore } from "@/src/shared/storage/secureJson";
 import { STORAGE_KEYS } from "@/src/shared/storage/storageKeys";
 

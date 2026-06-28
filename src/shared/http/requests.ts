@@ -1,5 +1,10 @@
 import { api } from "./client";
-import type { ApiResponse } from "./types";
+
+export type ApiResponse<T> = {
+  code: number;
+  message: string;
+  response: T;
+};
 
 export const http = {
   get: <T>(url: string) => {

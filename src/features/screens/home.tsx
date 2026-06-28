@@ -28,14 +28,22 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 export default function Home() {
-  const { data: summary, isLoading: isSummaryLoading } = useDashboard();
-  const { data: transaction, isLoading: isTransactionLoading } =
-    useTransactions();
+  const { data: summary, isLoading: isSummaryLoading, refetch: refetchSummary, isRefetching: isRefetchingSummary } = useDashboard();
+  const { data: transaction, isLoading: isTransactionLoading, refetch: refetchTransactions, isRefetching: isRefetchingTransactions } = useTransactions();
+
+  const handleRefresh = () => {
+    refetchSummary();
+    refetchTransactions();
+  };
 
   //console.log("API ==>", transaction);
 
   if (isSummaryLoading || isTransactionLoading) {
-    return <ActivityIndicator size="small" color="#fff" />;
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F6F8FA" }}>
+        <ActivityIndicator size="large" color="#1E293B" />
+      </View>
+    );
   }
 
   return (
@@ -99,6 +107,8 @@ export default function Home() {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContent}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        refreshing={isRefetchingSummary || isRefetchingTransactions}
+        onRefresh={handleRefresh}
         renderItem={({ item }) => {
           const CategoryIcon = iconMap[item.categoryIcon] ?? ShoppingCart;
 

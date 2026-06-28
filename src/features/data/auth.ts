@@ -1,8 +1,8 @@
-import { create } from "axios";
+import axios from "axios";
 
 import { ENV } from "@/src/config/env";
 import { http } from "@/src/shared/http/requests";
-import type { ApiResponse } from "@/src/shared/http/types";
+import type { ApiResponse } from "@/src/shared/http/requests";
 
 export type LoginRequest = {
   emailOrPhone: string;
@@ -38,13 +38,6 @@ export type RegisterResponse = {
   email: string;
 };
 
-const refreshClient = create({
-  baseURL: ENV.API_BASE_URL,
-  headers: {
-    Accept: "application/json",
-  },
-});
-
 export const authRepository = {
   login: (body: LoginRequest) =>
     http.post<AuthSession>("/service/auth/login", body),
@@ -53,9 +46,13 @@ export const authRepository = {
     http.post<RegisterResponse>("/service/auth/register", body),
 
   async refresh(refreshToken: string): Promise<AuthSession> {
-    const { data } = await refreshClient.post<ApiResponse<AuthSession>>(
-      "/service/auth/refresh",
+    // Uses axios directly (not the `api` instance) to bypass interceptors.
+    // If we used `api` here, a 401 from this endpoint would trigger another
+    // refresh → infinite loop. Base axios has no interceptors attached.
+    const { data } = await axios.post<ApiResponse<AuthSession>>(
+      `${ENV.API_BASE_URL}/service/auth/refresh`,
       { refreshToken },
+      { headers: { Accept: "application/json" } },
     );
     return data.response;
   },

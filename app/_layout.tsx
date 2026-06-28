@@ -18,19 +18,15 @@ export const unstable_settings = {
 configureHttpAuth({
   getAccessToken: () => useAuthStore.getState().accessToken,
 
-  async refreshTokens() {
+  async refreshSession() {
     const { refreshToken, setSession } = useAuthStore.getState();
-
-    if (!refreshToken) {
-      throw new Error("No refresh token available");
-    }
-
+    if (!refreshToken) throw new Error("No refresh token available");
     const session = await authRepository.refresh(refreshToken);
     await setSession(session);
     return session.accessToken;
   },
 
-  logout: () => useAuthStore.getState().clearSession(),
+  onLogout: () => useAuthStore.getState().clearSession(),
 });
 
 export default function RootLayout() {
