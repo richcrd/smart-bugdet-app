@@ -15,6 +15,7 @@ import { router } from "expo-router";
 import { useAuthStore } from "@/src/features/stores/auth.store";
 import { getErrorMessage } from "@/src/shared/utils/common";
 import { styles } from "../styles/loginStyles";
+import { toast } from "sonner-native";
 
 export default function Login() {
   // Estado para guardar el correo o teléfono
@@ -38,11 +39,10 @@ export default function Login() {
     try {
       const { message } = await login({ emailOrPhone: email, password });
       // console.log('API => ' + JSON.stringify(response, null, 2), "MSG " + message, "CODE" + code);
-      Alert.alert("Éxito", message, [
-        { text: "OK", onPress: () => router.replace("/(tabs)") },
-      ]);
+      toast.success(message);
+      router.replace("/(tabs)");
     } catch (error) {
-      Alert.alert("Error", getErrorMessage(error));
+      toast.error(getErrorMessage(error))
     } finally {
       setLoading(false);
     }

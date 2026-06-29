@@ -46,9 +46,6 @@ export const authRepository = {
     http.post<RegisterResponse>("/service/auth/register", body),
 
   async refresh(refreshToken: string): Promise<AuthSession> {
-    // Uses axios directly (not the `api` instance) to bypass interceptors.
-    // If we used `api` here, a 401 from this endpoint would trigger another
-    // refresh → infinite loop. Base axios has no interceptors attached.
     const { data } = await axios.post<ApiResponse<AuthSession>>(
       `${ENV.API_BASE_URL}/service/auth/refresh`,
       { refreshToken },

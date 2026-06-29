@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Toaster } from "sonner-native";
 
 import { authRepository } from "@/src/features/data/auth";
 import { useAuthStore } from "@/src/features/stores/auth.store";
@@ -60,6 +61,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <Stack screenOptions={{ headerShown: false }} />
           <StatusBar style="auto" />
+          <Toaster />
         </QueryClientProvider>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>
