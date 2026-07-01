@@ -13,7 +13,7 @@ import { useCreateWallet, useDeleteWallet, useSetDefaultWallet, useUpdateWallet,
 import { registerForPushNotifications } from "../notifications/register";
 import { colors } from "../constants/colors";
 
-type SheetType = "languages" | "wallets" | null;
+type SheetType = "languages" | "wallets" | "balanceAlert" | null;
 
 type MenuRowProps = {
   label: string;
@@ -69,10 +69,14 @@ export default function Profile() {
   const setLanguage = usePreferencesStore((state) => state.setLanguage);
   const notificationsEnabled = usePreferencesStore((state) => state.notificationsEnabled);
   const setNotificationsEnabled = usePreferencesStore((state) => state.setNotificationsEnabled);
+  const balanceAlertThreshold = usePreferencesStore((state) => state.balanceAlertThreshold);
+  const setBalanceAlertThreshold = usePreferencesStore((state) => state.setBalanceAlertThreshold);
   const [loading, setLoading] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [sheetType, setSheetType] = useState<SheetType>(null);
   const [savingItemId, setSavingItemId] = useState<number | null>(null);
+  const [balanceAlertInput, setBalanceAlertInput] = useState("");
+  const [savingBalanceAlert, setSavingBalanceAlert] = useState(false);
   const { data: languages, isLoading: isLanguageLoading } = useCatalog();
   const { data: currencies } = useCurrencies();
   const { data: wallets, isLoading: isWalletsLoading } = useWallets();
@@ -92,6 +96,9 @@ export default function Profile() {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const openSheet = (type: SheetType) => {
+    if (type === "balanceAlert") {
+      setBalanceAlertInput(balanceAlertThreshold?.toString() ?? "");
+    }
     setSheetType(type);
     bottomSheetRef.current?.expand();
   };
@@ -145,6 +152,24 @@ export default function Profile() {
       setNotificationsLoading(false);
     }
   }, [setNotificationsEnabled]);
+
+  const handleSaveBalanceAlert = useCallback(async () => {
+    const threshold = parseFloat(balanceAlertInput);
+    if (isNaN(threshold) || threshold < 0) {
+      toast.error("Ingresa un monto válido");
+      return;
+    }
+    setSavingBalanceAlert(true);
+    try {
+      await setBalanceAlertThreshold(threshold);
+      toast.success("Alerta de saldo actualizada");
+      bottomSheetRef.current?.close();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setSavingBalanceAlert(false);
+    }
+  }, [balanceAlertInput, setBalanceAlertThreshold]);
 
   const confirmSetLanguage = useCallback((item: any) => {
     const label = `${item.name} (${item.code})`;
@@ -366,6 +391,7 @@ export default function Profile() {
             onValueChange={handleToggleNotifications}
             disabled={notificationsLoading}
           />
+          <MenuRow label="Alerta de saldo" onPress={() => openSheet("balanceAlert")} />
           <MenuRow label="Idiomas" onPress={() => openSheet("languages")} />
           <MenuRow label="Carteras" onPress={() => openSheet("wallets")} last />
         </View>
@@ -463,6 +489,30 @@ export default function Profile() {
               }
             />
           </>
+        ) : sheetType === "balanceAlert" ? (
+          <View style={styles.createForm}>
+            <Text style={styles.sheetTitle}>Alerta de saldo</Text>
+            <Text style={styles.fieldLabel}>Notificarme cuando mi saldo llegue a</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="0.00"
+              placeholderTextColor={colors.textTertiary}
+              keyboardType="decimal-pad"
+              value={balanceAlertInput}
+              onChangeText={setBalanceAlertInput}
+            />
+            <TouchableOpacity
+              style={[styles.createButton, !balanceAlertInput.trim() && styles.createButtonDisabled]}
+              onPress={handleSaveBalanceAlert}
+              disabled={!balanceAlertInput.trim() || savingBalanceAlert}
+            >
+              {savingBalanceAlert ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.createButtonText}>Guardar</Text>
+              )}
+            </TouchableOpacity>
+          </View>
         ) : (
           <>
             <Text style={styles.sheetTitle}>Idiomas</Text>

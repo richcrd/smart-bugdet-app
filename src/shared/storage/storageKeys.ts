@@ -7,5 +7,6 @@ export const STORAGE_KEYS = {
     languageId: "smb.preferences.languageId",
     currencyId: "smb.preferences.currencyId",
     notificationsEnabled: "smb.preferences.notificationsEnabled",
+    balanceAlertThreshold: "smb.preferences.balanceAlertThreshold",
   },
 } as const;

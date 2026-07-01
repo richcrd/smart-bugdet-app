@@ -8,12 +8,14 @@ export type UserPreferenceResponse = {
   languageCode: string;
   darkModeEnabled: boolean;
   notificationsEnabled: boolean;
+  balanceAlertThreshold: number | null;
 };
 
 export type UpdateUserPreferenceRequest = {
   defaultCurrencyId?: number;
   languageId?: number;
   notificationsEnabled?: boolean;
+  balanceAlertThreshold?: number;
 };
 
 export const preferencesRepository = {
