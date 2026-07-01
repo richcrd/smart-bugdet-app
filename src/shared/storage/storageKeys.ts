@@ -6,5 +6,6 @@ export const STORAGE_KEYS = {
   preferences: {
     languageId: "smb.preferences.languageId",
     currencyId: "smb.preferences.currencyId",
+    notificationsEnabled: "smb.preferences.notificationsEnabled",
   },
 } as const;

@@ -13,6 +13,7 @@ export type UserPreferenceResponse = {
 export type UpdateUserPreferenceRequest = {
   defaultCurrencyId?: number;
   languageId?: number;
+  notificationsEnabled?: boolean;
 };
 
 export const preferencesRepository = {

@@ -12,6 +12,8 @@
       "bundleIdentifier": "com.devrickk.smart-budget-app"
     },
     "android": {
+      "package": "com.devrickk.smart_budget_app",
+      "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
@@ -32,11 +34,26 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/smb-logo.png",
+          "color": "#1A9B5A"
+        }
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "607b3fd2-1489-4603-860c-bb62785b1011"
+      }
+    },
+    "owner": "devrickk"
   }
 }

@@ -1,4 +1,4 @@
-import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import React, { useCallback, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Check, ChevronRight, LogOut, Pencil, Trash2, User, X } from "lucide-react-native";
@@ -10,6 +10,7 @@ import { usePreferencesStore } from "../stores/preferences.store";
 import { formatCurrency, getErrorMessage } from "@/src/shared/utils/common";
 import { useCatalog, useCurrencies } from "../hooks/useCatalog";
 import { useCreateWallet, useDeleteWallet, useSetDefaultWallet, useUpdateWallet, useWallets } from "../hooks/useWallets";
+import { registerForPushNotifications } from "../notifications/register";
 import { colors } from "../constants/colors";
 
 type SheetType = "languages" | "wallets" | null;
@@ -18,15 +19,45 @@ type MenuRowProps = {
   label: string;
   onPress?: () => void;
   last?: boolean;
+  loading?: boolean;
 };
 
-function MenuRow({ label, onPress, last }: MenuRowProps) {
+function MenuRow({ label, onPress, last, loading }: MenuRowProps) {
   return (
     <View>
-      <TouchableOpacity style={styles.menuRow} onPress={onPress} activeOpacity={0.6}>
+      <TouchableOpacity style={styles.menuRow} onPress={onPress} disabled={loading} activeOpacity={0.6}>
         <Text style={styles.menuLabel}>{label}</Text>
-        <ChevronRight size={18} color={colors.textTertiary} strokeWidth={1.8} />
+        {loading ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : (
+          <ChevronRight size={18} color={colors.textTertiary} strokeWidth={1.8} />
+        )}
       </TouchableOpacity>
+      {!last && <View style={styles.separator} />}
+    </View>
+  );
+}
+
+type MenuSwitchRowProps = {
+  label: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+  disabled?: boolean;
+  last?: boolean;
+};
+
+function MenuSwitchRow({ label, value, onValueChange, disabled, last }: MenuSwitchRowProps) {
+  return (
+    <View>
+      <View style={styles.menuRow}>
+        <Text style={styles.menuLabel}>{label}</Text>
+        <Switch
+          value={value}
+          onValueChange={onValueChange}
+          disabled={disabled}
+          trackColor={{ false: colors.border, true: colors.primary }}
+        />
+      </View>
       {!last && <View style={styles.separator} />}
     </View>
   );
@@ -36,7 +67,10 @@ export default function Profile() {
   const logout = useAuthStore((state) => state.logout);
   const languageId = usePreferencesStore((state) => state.languageId);
   const setLanguage = usePreferencesStore((state) => state.setLanguage);
+  const notificationsEnabled = usePreferencesStore((state) => state.notificationsEnabled);
+  const setNotificationsEnabled = usePreferencesStore((state) => state.setNotificationsEnabled);
   const [loading, setLoading] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [sheetType, setSheetType] = useState<SheetType>(null);
   const [savingItemId, setSavingItemId] = useState<number | null>(null);
   const { data: languages, isLoading: isLanguageLoading } = useCatalog();
@@ -96,6 +130,21 @@ export default function Profile() {
       },
     ]);
   };
+
+  const handleToggleNotifications = useCallback(async (nextValue: boolean) => {
+    setNotificationsLoading(true);
+    try {
+      if (nextValue) {
+        await registerForPushNotifications();
+      }
+      await setNotificationsEnabled(nextValue);
+      toast.success(nextValue ? "Notificaciones activadas" : "Notificaciones desactivadas");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, [setNotificationsEnabled]);
 
   const confirmSetLanguage = useCallback((item: any) => {
     const label = `${item.name} (${item.code})`;
@@ -311,7 +360,12 @@ export default function Profile() {
         <View style={styles.menuCard}>
           <MenuRow label="Métodos de pago" />
           <MenuRow label="Categorías" />
-          <MenuRow label="Notificaciones" />
+          <MenuSwitchRow
+            label="Notificaciones"
+            value={notificationsEnabled ?? false}
+            onValueChange={handleToggleNotifications}
+            disabled={notificationsLoading}
+          />
           <MenuRow label="Idiomas" onPress={() => openSheet("languages")} />
           <MenuRow label="Carteras" onPress={() => openSheet("wallets")} last />
         </View>
