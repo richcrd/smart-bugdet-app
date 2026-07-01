@@ -37,6 +37,10 @@ export default function Registro() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false)
+
+  // Controlan si la contraseña se muestra o se oculta
+const [showPassword, setShowPassword] = useState(false);
+const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const registerMutation = useRegister();
   
@@ -177,25 +181,47 @@ export default function Registro() {
         onChangeText={setPhoneNumber}
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Contraseña"
-        placeholderTextColor="#888"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        autoCapitalize="none"
-      />
+      <View style={styles.passwordContainer}>
+  <TextInput
+    style={styles.passwordInput}
+    placeholder="Contraseña"
+    placeholderTextColor="#888"
+    secureTextEntry={!showPassword}
+    value={password}
+    onChangeText={setPassword}
+    autoCapitalize="none"
+  />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Confirmar contraseña"
-        placeholderTextColor="#888"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        autoCapitalize="none"
-      />
+  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+    <Ionicons
+      name={showPassword ? "eye-off-outline" : "eye-outline"}
+      size={22}
+      color="#666"
+    />
+  </TouchableOpacity>
+</View>
+
+      <View style={styles.passwordContainer}>
+  <TextInput
+    style={styles.passwordInput}
+    placeholder="Confirmar contraseña"
+    placeholderTextColor="#888"
+    secureTextEntry={!showConfirmPassword}
+    value={confirmPassword}
+    onChangeText={setConfirmPassword}
+    autoCapitalize="none"
+  />
+
+  <TouchableOpacity
+    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+  >
+    <Ionicons
+      name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+      size={22}
+      color="#666"
+    />
+  </TouchableOpacity>
+</View>
 
       <TouchableOpacity
         style={styles.registerButton}
@@ -208,8 +234,21 @@ export default function Registro() {
           <Text style={styles.registerButtonText}>
             Crear Cuenta
           </Text>
+           
         )}
       </TouchableOpacity>
+
+      <TouchableOpacity
+  style={styles.loginContainer}
+  onPress={() => router.replace("/login")}
+>
+  <Text style={styles.loginText}>
+    ¿Ya tienes una cuenta?{" "}
+    <Text style={styles.loginLink}>Inicia sesión</Text>
+  </Text>
+</TouchableOpacity>
+
+
     </ScrollView>
      </KeyboardAvoidingView>
   );
