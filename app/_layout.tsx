@@ -8,6 +8,7 @@ import "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Toaster } from "sonner-native";
 
+import { initializeAds } from "@/src/features/ads/consent";
 import { authRepository } from "@/src/features/data/auth";
 import LoadingScreen from "@/src/features/screens/LoadingScreen";
 import { useAuthStore } from "@/src/features/stores/auth.store";
@@ -52,6 +53,7 @@ export default function RootLayout() {
   useEffect(() => {
     hydrate();
     hydratePreferences();
+    initializeAds();
   }, [hydrate, hydratePreferences]);
 
   useEffect(() => {

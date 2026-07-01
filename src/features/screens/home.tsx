@@ -21,6 +21,7 @@ import {
 } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatCurrency } from "@/src/shared/utils/common";
+import { AdBanner } from "../components/AdBanner";
 import { colors } from "../constants/colors";
 import { toast } from "sonner-native";
 
@@ -176,6 +177,7 @@ export default function Home() {
           </View>
         }
       />
+      <AdBanner />
     </SafeAreaView>
   );
 }

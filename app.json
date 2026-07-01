@@ -47,7 +47,20 @@
           "color": "#1A9B5A"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "Usaremos este identificador para mostrarte anuncios más relevantes."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
