@@ -4,6 +4,8 @@ export type SummaryResponse = {
   currentBalance: number;
   totalIncomeMonth: number;
   totalExpenseMonth: number;
+  currencyCode: string;
+  currencySymbol: string;
 };
 
 export type TransactionList = {
@@ -16,6 +18,8 @@ export type TransactionList = {
   categoryName: string;
   categoryIcon: string;
   categoryColor: string;
+  currencyCode: string;
+  currencySymbol: string;
 }
 
 export const dashboardRepository = {

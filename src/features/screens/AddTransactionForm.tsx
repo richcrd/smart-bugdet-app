@@ -8,6 +8,8 @@ import {
   View,
 } from "react-native";
 
+import { useDashboard } from "../hooks/useDashboard";
+
 type TransactionType = "gasto" | "ingreso";
 
 
@@ -16,6 +18,7 @@ type Props = {
 };
 
 export function AddTransactionForm({ onSave }: Props) {
+  const { data: summary } = useDashboard();
   const [type, setType] = useState<TransactionType>("gasto");
   const [amount, setAmount] = useState("");
 
@@ -56,7 +59,7 @@ export function AddTransactionForm({ onSave }: Props) {
       </View>
 
       <View style={styles.amountRow}>
-        <Text style={styles.currency}>C$</Text>
+        <Text style={styles.currency}>{summary?.currencySymbol ?? ""}</Text>
         <TextInput
           style={styles.amountInput}
           placeholder="0.00"

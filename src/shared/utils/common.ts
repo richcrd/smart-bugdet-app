@@ -8,3 +8,7 @@ export const formatAmount = (value: number | string) => {
     maximumFractionDigits: 2,
   }).format(Number(value));
 };
+
+export const formatCurrency = (value: number | string, symbol: string) => {
+  return `${symbol} ${formatAmount(value)}`.trim();
+};

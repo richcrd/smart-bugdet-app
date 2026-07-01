@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 import type { AuthSession, LoginRequest } from "@/src/features/data/auth";
 import { authRepository } from "@/src/features/data/auth";
+import { usePreferencesStore } from "@/src/features/stores/preferences.store";
 import type { ApiResponse } from "@/src/shared/http/requests";
 import { secureStore } from "@/src/shared/storage/secureJson";
 import { STORAGE_KEYS } from "@/src/shared/storage/storageKeys";
@@ -69,6 +70,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       secureStore.remove(STORAGE_KEYS.auth.accessToken),
       secureStore.remove(STORAGE_KEYS.auth.refreshToken),
     ]);
+    await usePreferencesStore.getState().reset();
 
     set({ accessToken: null, refreshToken: null, status: "unauthenticated" });
   },

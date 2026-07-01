@@ -1,18 +1,18 @@
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { BottomSheetModal, BottomSheetBackdrop } from "@gorhom/bottom-sheet";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Tabs } from "expo-router";
 import { useCallback, useRef } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { BarChart3, User, Plus, Banknote } from "lucide-react-native";
 
 import { AddTransactionForm } from "@/src/features/screens/AddTransactionForm";
-
-const ACTIVE_COLOR = "#2E9E47";
+import { colors }from "@/src/features/constants/colors";
 
 function AddTabButton({ onPress }: { onPress: () => void }) {
   return (
     <TouchableOpacity style={styles.addButtonWrapper} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.addButton}>
-        <FontAwesome name="plus" size={24} color="white" />
+        <Plus size={26} color="#FFFFFF" strokeWidth={2.5} />
       </View>
     </TouchableOpacity>
   );
@@ -29,13 +29,22 @@ export default function TabsLayout() {
     bottomSheetRef.current?.dismiss();
   }, []);
 
+  const renderBackdrop = useCallback((props: any) => (
+    <BottomSheetBackdrop
+      {...props}
+      disappearsOnIndex={-1}
+      appearsOnIndex={0}
+      opacity={0.6}
+    />
+  ), []);
+
   return (
     <>
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: ACTIVE_COLOR,
-          tabBarStyle: { overflow: "visible" },
+          tabBarActiveTintColor: colors.primary,
+          tabBarStyle: styles.tabs,
         }}
       >
         <Tabs.Screen
@@ -52,7 +61,7 @@ export default function TabsLayout() {
           options={{
             title: "Gastos",
             tabBarIcon: ({ color, size }) => (
-              <FontAwesome name="money" color={color} size={size} />
+              <Banknote size={size - 2} color={color} strokeWidth={1.8} />
             ),
           }}
         />
@@ -66,9 +75,9 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="analytics"
           options={{
-            title: "Estadísticas",
+            title: "Análisis",
             tabBarIcon: ({ color, size }) => (
-              <FontAwesome name="bar-chart" color={color} size={size} />
+              <BarChart3 size={size - 2} color={color} strokeWidth={1.8} />
             ),
           }}
         />
@@ -77,13 +86,17 @@ export default function TabsLayout() {
           options={{
             title: "Perfil",
             tabBarIcon: ({ color, size }) => (
-              <FontAwesome name="user" color={color} size={size} />
+              <User size={size - 2} color={color} strokeWidth={1.8} />
             ),
           }}
         />
       </Tabs>
 
-      <BottomSheetModal ref={bottomSheetRef} snapPoints={["90%"]}>
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        snapPoints={["90%"]}
+        backdropComponent={renderBackdrop}
+      >
         <AddTransactionForm onSave={closeSheet} />
       </BottomSheetModal>
     </>
@@ -92,7 +105,7 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   addButtonWrapper: {
-    top: -22,
+    top: -10,
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -101,8 +114,14 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "#2E9E47",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
+  tabs: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -20 },
+    shadowOpacity: 0.05,
+    shadowRadius: 30,
+  }
 });

@@ -9,6 +9,7 @@ import { Toaster } from "sonner-native";
 
 import { authRepository } from "@/src/features/data/auth";
 import { useAuthStore } from "@/src/features/stores/auth.store";
+import { usePreferencesStore } from "@/src/features/stores/preferences.store";
 import { configureHttpAuth } from "@/src/shared/http/client";
 import { queryClient } from "@/src/shared/http/queryClient";
 
@@ -34,22 +35,26 @@ export default function RootLayout() {
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const status = useAuthStore((state) => state.status);
   const hydrate = useAuthStore((state) => state.hydrate);
+  const hydratePreferences = usePreferencesStore((state) => state.hydrate);
+  const reconcilePreferences = usePreferencesStore((state) => state.reconcileFromServer);
 
   useEffect(() => {
     hydrate();
-  }, [hydrate]);
+    hydratePreferences();
+  }, [hydrate, hydratePreferences]);
 
   useEffect(() => {
-    if (!hasHydrated) { 
+    if (!hasHydrated) {
       return;
     }
     
     if (status === "authenticated") {
+      reconcilePreferences();
       router.replace("/(tabs)");
     } else if (status === "unauthenticated") {
       router.replace("/(public)");
     }
-  }, [hasHydrated, status]);
+  }, [hasHydrated, status, reconcilePreferences]);
 
   if (!hasHydrated) {
     return null;
@@ -57,13 +62,13 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <BottomSheetModalProvider>
           <Stack screenOptions={{ headerShown: false }} />
-          <StatusBar style="auto" />
+          <StatusBar style="dark" />
           <Toaster />
-        </QueryClientProvider>
-      </BottomSheetModalProvider>
+        </BottomSheetModalProvider>
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }
