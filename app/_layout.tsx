@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Toaster } from "sonner-native";
 
 import { authRepository } from "@/src/features/data/auth";
+import LoadingScreen from "@/src/features/screens/LoadingScreen";
 import { useAuthStore } from "@/src/features/stores/auth.store";
 import { usePreferencesStore } from "@/src/features/stores/preferences.store";
 import { configureHttpAuth } from "@/src/shared/http/client";
@@ -67,7 +68,7 @@ export default function RootLayout() {
   }, [hasHydrated, status, reconcilePreferences]);
 
   if (!hasHydrated) {
-    return null;
+    return <LoadingScreen />;
   }
 
   return (

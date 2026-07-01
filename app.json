@@ -4,6 +4,7 @@
     "slug": "smart-budget-app",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
     "scheme": "smartbudget",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -15,7 +16,11 @@
       "package": "com.devrickk.smart_budget_app",
       "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
     },
     "web": {
       "output": "static"
