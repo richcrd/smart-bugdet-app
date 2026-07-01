@@ -51,4 +51,34 @@ dateText: {
   color: "#888",
   fontSize: 16,
 },
+passwordContainer: {
+  flexDirection: "row",
+  alignItems: "center",
+  
+  borderColor: "#ccc",
+  borderRadius: 12,
+  paddingHorizontal: 10,
+  backgroundColor: "#F3F4F6",
+  marginBottom: 15,
+},
+
+passwordInput: {
+  flex: 1,
+  height: 50,
+},
+
+loginContainer: {
+  marginTop: 20,
+  alignItems: "center",
+},
+
+loginText: {
+  color: "#555",
+  fontSize: 15,
+},
+
+loginLink: {
+  color: "#34a545",
+  fontWeight: "bold",
+},
 });
