@@ -6,7 +6,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useCallback, useRef } from "react";
+import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { useDashboard, useTransactions } from "../hooks/useDashboard";
+import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from "../hooks/useNotifications";
+import type { NotificationResponse } from "../data/notifications";
 import {
   Car,
   CircleDollarSign,
@@ -23,7 +27,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { formatCurrency } from "@/src/shared/utils/common";
 import { AdBanner } from "../components/AdBanner";
 import { colors } from "../constants/colors";
-import { toast } from "sonner-native";
+
+function formatRelativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diffMs / 60000);
+
+  if (minutes < 1) return "Ahora";
+  if (minutes < 60) return `Hace ${minutes} min`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Hace ${hours} h`;
+
+  const days = Math.floor(hours / 24);
+  return `Hace ${days} d`;
+}
 
 const iconMap: Record<string, LucideIcon> = {
   "shopping-cart": ShoppingCart,
@@ -47,15 +64,43 @@ function getGreeting(): string {
 export default function Home() {
   const { data: summary, isLoading: isSummaryLoading, refetch: refetchSummary, isRefetching: isRefetchingSummary } = useDashboard();
   const { data: transaction, isLoading: isTransactionLoading, refetch: refetchTransactions, isRefetching: isRefetchingTransactions } = useTransactions();
+  const { data: notifications } = useNotifications();
+  const markNotificationRead = useMarkNotificationRead();
+  const markAllNotificationsRead = useMarkAllNotificationsRead();
+
+  const notificationsSheetRef = useRef<BottomSheet>(null);
+  const unreadCount = notifications?.filter((item) => !item.isRead).length ?? 0;
+
+  const renderNotificationsBackdrop = useCallback((props: any) => (
+    <BottomSheetBackdrop
+      {...props}
+      disappearsOnIndex={-1}
+      appearsOnIndex={0}
+      opacity={0.5}
+    />
+  ), []);
 
   const handleRefresh = () => {
     refetchSummary();
     refetchTransactions();
   };
 
-  const handleComingSoon = (value: string) => {
-    toast.info(`${value} próximamente`)
-  }
+  const renderNotificationItem = ({ item }: { item: NotificationResponse }) => (
+    <TouchableOpacity
+      style={[styles.notificationItem, !item.isRead && styles.notificationItemUnread]}
+      onPress={() => !item.isRead && markNotificationRead.mutate(item.id)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.notificationTextContainer}>
+        <Text style={[styles.notificationTitle, !item.isRead && styles.notificationTitleUnread]}>
+          {item.title}
+        </Text>
+        <Text style={styles.notificationBody}>{item.body}</Text>
+        <Text style={styles.notificationTime}>{formatRelativeTime(item.createdAt)}</Text>
+      </View>
+      {!item.isRead && <View style={styles.unreadDot} />}
+    </TouchableOpacity>
+  );
 
   if (isSummaryLoading || isTransactionLoading) {
     return (
@@ -82,8 +127,9 @@ export default function Home() {
                 <Text style={styles.greeting}>{getGreeting()}</Text>
                 <Text style={styles.headerTitle}>Hola!</Text>
               </View>
-              <TouchableOpacity style={styles.walletBadge} onPress={() => handleComingSoon('Notificaciones')}>
+              <TouchableOpacity style={styles.walletBadge} onPress={() => notificationsSheetRef.current?.expand()}>
                 <Bell size={22} color={colors.darkCard} strokeWidth={1.8} />
+                {unreadCount > 0 && <View style={styles.notificationBadge} />}
               </TouchableOpacity>
             </View>
 
@@ -178,6 +224,32 @@ export default function Home() {
         }
       />
       <AdBanner />
+
+      <BottomSheet
+        ref={notificationsSheetRef}
+        index={-1}
+        snapPoints={["60%"]}
+        enablePanDownToClose={true}
+        backdropComponent={renderNotificationsBackdrop}
+      >
+        <View style={styles.sheetHeaderRow}>
+          <Text style={styles.sheetTitle}>Notificaciones</Text>
+          {unreadCount > 0 && (
+            <TouchableOpacity onPress={() => markAllNotificationsRead.mutate()} style={[styles.iconButton, { marginRight: 20 }]}>
+              <Text style={styles.markAllText}>Marcar todas</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <BottomSheetFlatList
+          data={notifications ?? []}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderNotificationItem}
+          contentContainerStyle={styles.sheetList}
+          ListEmptyComponent={
+            <Text style={styles.sheetEmpty}>No tienes notificaciones</Text>
+          }
+        />
+      </BottomSheet>
     </SafeAreaView>
   );
 }
@@ -395,5 +467,91 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 13,
     color: colors.textTertiary,
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: colors.danger,
+    borderWidth: 1.5,
+    borderColor: colors.darkCard,
+  },
+  sheetHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 4,
+    paddingBottom: 12,
+  },
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.textPrimary,
+    paddingHorizontal: 24,
+    paddingTop: 4,
+    paddingBottom: 12,
+  },
+  iconButton: {
+    padding: 6,
+  },
+  markAllText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  sheetList: {
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+  },
+  sheetEmpty: {
+    textAlign: "center",
+    marginTop: 24,
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+  notificationItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  notificationItemUnread: {
+    backgroundColor: colors.primaryLight,
+    borderRadius: 12,
+  },
+  notificationTextContainer: {
+    flex: 1,
+    marginRight: 8,
+  },
+  notificationTitle: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  notificationTitleUnread: {
+    fontWeight: "700",
+  },
+  notificationBody: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  notificationTime: {
+    fontSize: 11,
+    color: colors.textTertiary,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+    marginTop: 6,
   },
 });
