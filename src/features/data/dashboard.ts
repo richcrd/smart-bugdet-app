@@ -22,6 +22,19 @@ export type TransactionList = {
   currencySymbol: string;
 }
 
+export type CreateTransactionRequest = {
+  walletId: number;
+  transactionTypeId: number;
+  categoryId: number;
+  subcategoryId: number | null;
+  paymentMethodId: number;
+  currencyId: number;
+  amount: number;
+  exchangeRate: number | null;
+  description: string;
+  transactionDate: string;
+};
+
 export const dashboardRepository = {
   summary: () => {
     return http.get<SummaryResponse>("/service/summary")
@@ -29,5 +42,9 @@ export const dashboardRepository = {
 
   transactionsList: () => {
     return http.get<TransactionList[]>("/service/transaction")
+  },
+
+  createTransaction: (body: CreateTransactionRequest) => {
+    return http.post<TransactionList>("/service/transaction", body)
   },
 }

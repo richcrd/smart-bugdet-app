@@ -16,3 +16,19 @@ export function useCurrencies() {
     select: (data) => data.response,
   });
 }
+
+export function usePaymentMethods() {
+  return useQuery({
+    queryKey: ["catalog", "payment-methods"],
+    queryFn: () => catalogRepository.paymentMethods(),
+    select: (data) => data.response,
+  });
+}
+
+export function useCategories() {
+  return useQuery({
+    queryKey: ["catalog", "categories"],
+    queryFn: () => catalogRepository.categories(),
+    select: (data) => data.response,
+  });
+}

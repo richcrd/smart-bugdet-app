@@ -524,6 +524,7 @@ const styles = StyleSheet.create({
   notificationItemUnread: {
     backgroundColor: colors.primaryLight,
     borderRadius: 12,
+    marginBottom: 10,
   },
   notificationTextContainer: {
     flex: 1,

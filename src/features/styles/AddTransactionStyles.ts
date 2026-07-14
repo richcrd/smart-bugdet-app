@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { colors } from "../constants/colors";
 
 export const styles = StyleSheet.create({
   container: {
@@ -199,5 +200,88 @@ export const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "700",
     marginLeft: 10,
+  },
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.textPrimary,
+    paddingHorizontal: 24,
+    paddingTop: 4,
+    paddingBottom: 12,
+  },
+  sheetList: {
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+  },
+
+  sheetItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+
+  sheetItemActive: {
+    backgroundColor: colors.primaryLight,
+    borderRadius: 12,
+  },
+
+  sheetItemLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  sheetIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+  },
+
+  sheetItemText: {
+    fontSize: 15,
+    color: colors.textPrimary,
+    fontWeight: "400",
+  },
+
+  sheetItemTextActive: {
+    color: colors.primary,
+    fontWeight: "600",
+  },
+
+  sheetEmpty: {
+    textAlign: "center",
+    marginTop: 24,
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+
+  /* DATE PICKER (sheet) */
+
+  datePickerContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    alignItems: "center",
+  },
+
+  dateDoneButton: {
+    alignSelf: "stretch",
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    alignItems: "center",
+    paddingVertical: 14,
+    marginTop: 8,
+  },
+
+  dateDoneText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
