@@ -1,7 +1,7 @@
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import React, { useCallback, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Check, ChevronRight, LogOut, Pencil, Trash2, User, X } from "lucide-react-native";
+import { Check, ChevronRight, LogOut, Pencil, Trash2, X } from "lucide-react-native";
 import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { toast } from "sonner-native";
 
@@ -414,16 +414,6 @@ export default function Profile() {
       >
       <Text style={styles.pageTitle}>Perfil</Text>
 
-      <View style={styles.userSection}>
-        <View style={styles.avatarContainer}>
-          <User size={28} color={colors.primary} strokeWidth={1.8} />
-        </View>
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>Mi cuenta</Text>
-          <Text style={styles.userEmail}>Gestiona tu perfil y preferencias</Text>
-        </View>
-      </View>
-
       <View style={styles.sectionGroup}>
         <Text style={styles.sectionLabel}>Cuenta</Text>
         <View style={styles.menuCard}>
@@ -690,49 +680,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 24,
   },
-  userSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.bgCard,
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 28,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  avatarContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primaryLight,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 14,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: colors.textPrimary,
-    marginBottom: 3,
-  },
-  userEmail: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
   sectionGroup: {
     marginBottom: 24,
   },
   sectionLabel: {
     fontSize: 12,
-    fontWeight: "700",
-    color: colors.textSecondary,
-    letterSpacing: 0.8,
+    fontWeight: "800",
+    color: colors.primaryDark,
     textTransform: "uppercase",
     marginBottom: 8,
     marginLeft: 4,
