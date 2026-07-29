@@ -16,12 +16,12 @@ import { styles } from "../styles/AddTransactionStyles";
 import { useCategories, usePaymentMethods } from "../hooks/useCatalog";
 import { CategorySheetContent } from "./add-transaction/CategorySheetContent";
 import { PaymentMethodSheetContent } from "./add-transaction/PaymentMethodSheetContent";
-import { DateSheetContent } from "./add-transaction/DateSheetContent";
 import { TransactionTypeToggle } from "./add-transaction/TransactionTypeToggle";
 import { TransactionDetailsCard } from "./add-transaction/TransactionDetailsCard";
 import { formatPrettyDate, toLocalDateString } from "./add-transaction/types";
 import type { SelectableItem, SheetType, TransactionType } from "./add-transaction/types";
 import { toast } from "sonner-native";
+import { DatePickerSheet } from "@/src/shared/components/DatePickerSheet";
 
 const TRANSACTION_TYPE_IDS: Record<TransactionType, number> = {
   gasto: 1,
@@ -226,7 +226,13 @@ export function AddTransactionForm({ onSave }: Props) {
           backdropComponent={renderBackdrop}
         >
           {sheetType === "date" ? (
-            <DateSheetContent date={date} onChange={setDate} onDone={closeSheet} />
+            <DatePickerSheet
+              value={date}
+              onChange={setDate}
+              onDone={closeSheet}
+              title="Fecha"
+              maximumDate={new Date()}
+            />
           ) : sheetType === "categories" ? (
             <CategorySheetContent
               categories={categories}

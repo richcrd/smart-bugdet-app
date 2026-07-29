@@ -7,13 +7,15 @@ import { toast } from "sonner-native";
 
 import { useAuthStore } from "../stores/auth.store";
 import { usePreferencesStore } from "../stores/preferences.store";
-import { formatCurrency, getErrorMessage } from "@/src/shared/utils/common";
+import { formatCurrency, getApiError, getErrorMessage } from "@/src/shared/utils/common";
 import { useCatalog, useCurrencies } from "../hooks/useCatalog";
 import { useCreateWallet, useDeleteWallet, useSetDefaultWallet, useUpdateWallet, useWallets } from "../hooks/useWallets";
 import { registerForPushNotifications } from "../notifications/register";
 import { colors } from "../constants/colors";
+import { useUpdateProfile, useUserProfile } from "../hooks/useUserProfile";
+import { DatePickerSheet } from "@/src/shared/components/DatePickerSheet";
 
-type SheetType = "languages" | "wallets" | "balanceAlert" | null;
+type SheetType = "languages" | "wallets" | "balanceAlert" | "editProfile" | null;
 
 type MenuRowProps = {
   label: string;
@@ -80,6 +82,7 @@ export default function Profile() {
   const { data: languages, isLoading: isLanguageLoading } = useCatalog();
   const { data: currencies } = useCurrencies();
   const { data: wallets, isLoading: isWalletsLoading } = useWallets();
+  const { data: profile, isLoading: isProfileLoading } = useUserProfile();
 
   const [walletMode, setWalletMode] = useState<"list" | "create">("list");
   const [newWalletName, setNewWalletName] = useState("");
@@ -92,12 +95,29 @@ export default function Profile() {
   const updateWallet = useUpdateWallet();
   const setDefaultWallet = useSetDefaultWallet();
   const deleteWallet = useDeleteWallet();
+  const updateProfile = useUpdateProfile();
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
+  const [editBirthDate, setEditBirthDate] = useState("");
+  const [editUserName, setEditUserName] = useState("");
+  const [editPhoneNumber, setEditPhoneNumber] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPage, setEditPage] = useState<"form" | "date">("form");
 
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const openSheet = (type: SheetType) => {
     if (type === "balanceAlert") {
       setBalanceAlertInput(balanceAlertThreshold?.toString() ?? "");
+    }
+    if (type === "editProfile" && profile) {
+      setEditPage("form");
+      setEditFirstName(profile.firstName ?? "");
+      setEditLastName(profile.lastName ?? "");
+      setEditBirthDate(profile.birthDate ?? "");
+      setEditUserName(profile.userName ?? "");
+      setEditPhoneNumber(profile.phoneNumber ?? "");
+      setEditEmail(profile.email ?? "");
     }
     setSheetType(type);
     bottomSheetRef.current?.expand();
@@ -170,6 +190,33 @@ export default function Profile() {
       setSavingBalanceAlert(false);
     }
   }, [balanceAlertInput, setBalanceAlertThreshold]);
+
+  const handleSaveProfile = useCallback(async () => {
+    const body: Record<string, string> = {};
+    if (editFirstName.trim()) body.firstName = editFirstName.trim();
+    if (editLastName.trim()) body.lastName = editLastName.trim();
+    if (editUserName.trim()) body.userName = editUserName.trim();
+    if (editEmail.trim()) body.email = editEmail.trim();
+    if (editPhoneNumber.trim()) body.phoneNumber = editPhoneNumber.trim();
+    if (editBirthDate.trim()) body.birthDate = editBirthDate.trim();
+
+    try {
+      await updateProfile.mutateAsync(body);
+      toast.success("Perfil actualizado");
+      bottomSheetRef.current?.close();
+    } catch (error) {
+      const apiError = getApiError(error);
+      toast.error(apiError.message);
+    }
+  }, [editFirstName, editLastName, editBirthDate, editUserName, editPhoneNumber, editEmail, updateProfile]);
+
+  const handleDateChange = useCallback((selectedDate: Date) => {
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+    const day = String(selectedDate.getDate()).padStart(2, "0")
+    setEditBirthDate(`${year}-${month}-${day}`);
+    setEditPage("form");
+  }, []);
 
   const confirmSetLanguage = useCallback((item: any) => {
     const label = `${item.name} (${item.code})`;
@@ -351,7 +398,7 @@ export default function Profile() {
     );
   }, [pendingWalletId, renamingWalletId, renameValue, confirmSetDefaultWallet, handleDeleteWallet, startRenameWallet, saveRenameWallet]);
 
-  if (isLanguageLoading || isWalletsLoading) {
+  if (isLanguageLoading || isWalletsLoading || isProfileLoading) {
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -380,7 +427,7 @@ export default function Profile() {
       <View style={styles.sectionGroup}>
         <Text style={styles.sectionLabel}>Cuenta</Text>
         <View style={styles.menuCard}>
-          <MenuRow label="Información personal" last />
+          <MenuRow label="Editar Perfil" onPress={() => openSheet("editProfile")} last />
         </View>
       </View>
 
@@ -518,20 +565,103 @@ export default function Profile() {
               )}
             </TouchableOpacity>
           </View>
-        ) : (
-          <>
-            <Text style={styles.sheetTitle}>Idiomas</Text>
-            <BottomSheetFlatList
-              data={languages ?? []}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={renderLanguageItem}
-              contentContainerStyle={styles.sheetList}
-              ListEmptyComponent={
-                <Text style={styles.sheetEmpty}>No se encontraron idiomas</Text>
-              }
+        ) : sheetType === "editProfile" && editPage === "form" ? (
+          <BottomSheetScrollView contentContainerStyle={styles.createForm}>
+            <Text style={styles.sheetTitle}>Editar Perfil</Text>
+                
+            <Text style={styles.fieldLabel}>Nombre</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Nombre"
+              placeholderTextColor={colors.textTertiary}
+              value={editFirstName}
+              onChangeText={setEditFirstName}
+              maxLength={30}
             />
-          </>
-        )}
+
+            <Text style={styles.fieldLabel}>Apellido</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Apellido"
+              placeholderTextColor={colors.textTertiary}
+              value={editLastName}
+              onChangeText={setEditLastName}
+              maxLength={30}
+            />
+
+            <Text style={styles.fieldLabel}>Fecha de Nacimiento</Text>
+            <TouchableOpacity style={styles.textInput} onPress={() => setEditPage("date")}>
+              <Text style={{ fontSize: 15, color: editBirthDate ? colors.textPrimary : colors.textTertiary }}>{editBirthDate || "Seleccionar Fecha"}</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.fieldLabel}>Nombre de Usuario</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Usuario"
+              placeholderTextColor={colors.textTertiary}
+              value={editUserName}
+              onChangeText={setEditUserName}
+              autoCapitalize="none"
+              maxLength={50}
+            />
+
+            <Text style={styles.fieldLabel}>Teléfono</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Número de teléfono"
+              placeholderTextColor={colors.textTertiary}
+              value={editPhoneNumber}
+              onChangeText={setEditPhoneNumber}
+              keyboardType="phone-pad"
+              maxLength={30}
+            />
+
+            <Text style={styles.fieldLabel}>Correo Electrónico</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="correo@ejemplo.com"
+              placeholderTextColor={colors.textTertiary}
+              value={editEmail}
+              onChangeText={setEditEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              maxLength={150}
+            />
+
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={handleSaveProfile}
+              disabled={updateProfile.isPending}
+            >
+              {updateProfile.isPending ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.createButtonText}>Guardar Cambios</Text>
+              )}
+            </TouchableOpacity>
+          </BottomSheetScrollView> 
+          ) : sheetType === "editProfile" && editPage === "date" ? (
+              <DatePickerSheet
+                value={editBirthDate ? new Date(editBirthDate + "T12:00:00") : new Date()}
+                onChange={handleDateChange}
+                onDone={() => setEditPage("form")}
+                title="Fecha de Nacimiento"
+                maximumDate={new Date()}
+              />
+          ) : (
+            <>
+              <Text style={styles.sheetTitle}>Idiomas</Text>
+              <BottomSheetFlatList
+                data={languages ?? []}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderLanguageItem}
+                contentContainerStyle={styles.sheetList}
+                ListEmptyComponent={
+                  <Text style={styles.sheetEmpty}>No se encontraron idiomas</Text>
+                }
+              />
+            </>
+          )}
       </BottomSheet>
     </SafeAreaView>
   );
@@ -726,8 +856,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     color: colors.textSecondary,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
     marginBottom: 8,
     marginTop: 16,
   },
