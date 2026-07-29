@@ -16,8 +16,9 @@ import {
 import { styles } from "../styles/registerStyles";
 import { useRegister } from "../hooks/useRegistre";
 import { router } from "expo-router";
-import { getErrorMessage } from "@/src/shared/utils/common";
+import { getApiError } from "@/src/shared/utils/common";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { toast } from "sonner-native";
 
 export default function Registro() {
   // Datos de People
@@ -72,14 +73,14 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     };
       
     try {
-      const { message, response, code } = await registerMutation.mutateAsync(registerData);
-      // console.log('API => ' + JSON.stringify(response, null, 2), "MSG " + message, "CODE" + code);
+      const { message } = await registerMutation.mutateAsync(registerData);
       Alert.alert("Éxito", message, [
         { text: "OK", onPress: () => router.replace("/login") },
       ]);
       setLoading(false);
     } catch (error) {
-      Alert.alert("Error", getErrorMessage(error));
+      const apiError = getApiError(error);
+      toast.error(apiError.message);
       setLoading(false);
     } finally {
       setLoading(false);

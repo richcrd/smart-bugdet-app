@@ -6,6 +6,12 @@ export type ApiResponse<T> = {
   response: T;
 };
 
+export type ApiError = {
+  code: number;
+  message: string;
+  response?: unknown;
+}
+
 export const http = {
   get: <T>(url: string) => {
     return api.get<ApiResponse<T>>(url).then((r) => r.data)

@@ -1,4 +1,4 @@
-import { ActivityIndicator, Alert, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import React, { useCallback, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Check, ChevronRight, LogOut, Pencil, Trash2, User, X } from "lucide-react-native";
@@ -361,6 +361,10 @@ export default function Profile() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
       <Text style={styles.pageTitle}>Perfil</Text>
 
       <View style={styles.userSection}>
@@ -409,6 +413,7 @@ export default function Profile() {
           </>
         )}
       </TouchableOpacity>
+      </ScrollView>
 
       <BottomSheet
         ref={bottomSheetRef}
@@ -535,8 +540,11 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.bgCard,
+  },
+  scrollContent: {
     paddingHorizontal: 20,
+    paddingBottom: 24,
   },
   loaderContainer: {
     flex: 1,

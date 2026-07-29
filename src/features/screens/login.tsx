@@ -1,4 +1,3 @@
-import { FontAwesome } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -13,7 +12,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useAuthStore } from "@/src/features/stores/auth.store";
-import { getErrorMessage } from "@/src/shared/utils/common";
+import { getApiError } from "@/src/shared/utils/common";
 import { styles } from "../styles/loginStyles";
 import { toast } from "sonner-native";
 
@@ -38,11 +37,11 @@ export default function Login() {
     setLoading(true);
     try {
       const { message } = await login({ emailOrPhone: email, password });
-      // console.log('API => ' + JSON.stringify(response, null, 2), "MSG " + message, "CODE" + code);
       toast.success(message);
       router.replace("/(tabs)");
     } catch (error) {
-      toast.error(getErrorMessage(error))
+      const apiError = getApiError(error);
+      toast.error(apiError.message);
     } finally {
       setLoading(false);
     }

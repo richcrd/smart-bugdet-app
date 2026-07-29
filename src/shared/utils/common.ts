@@ -1,3 +1,6 @@
+import { isAxiosError } from "axios";
+import { ApiError } from "../http/requests";
+
 export function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Ocurrió un error inesperado.";
 }
@@ -12,3 +15,14 @@ export const formatAmount = (value: number | string) => {
 export const formatCurrency = (value: number | string, symbol: string) => {
   return `${symbol} ${formatAmount(value)}`.trim();
 };
+
+export function getApiError(error: unknown): ApiError {
+  if (isAxiosError<ApiError>(error) && error.response?.data) {
+    return error.response.data;
+  }
+
+  return {
+    code: 500,
+    message: "Ocurrió un error inesperado.",
+  };
+}
