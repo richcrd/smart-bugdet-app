@@ -64,7 +64,6 @@ export default function Analytics() {
             className="flex-1 bg-white rounded-3xl p-5 min-h-[160px] justify-between overflow-hidden"
             style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2 }}
           >
-            <View className="absolute top-0 left-0 right-0 h-[3px] bg-[#DC2626]" />
             <View>
               <View className="w-10 h-10 rounded-xl bg-[#FEE2E2] items-center justify-center mb-3">
                 <TrendingDown size={20} color="#DC2626" strokeWidth={2.5} />
@@ -90,7 +89,6 @@ export default function Analytics() {
             className="flex-1 bg-white rounded-3xl p-5 min-h-[160px] justify-between overflow-hidden"
             style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2 }}
           >
-            <View className="absolute top-0 left-0 right-0 h-[3px] bg-[#16A34A]" />
             <View>
               <View className="w-10 h-10 rounded-xl bg-[#DCFCE7] items-center justify-center mb-3">
                 <TrendingUp size={20} color="#16A34A" strokeWidth={2.5} />
@@ -117,7 +115,6 @@ export default function Analytics() {
           className="bg-white rounded-3xl p-5 min-h-[100px] justify-between overflow-hidden mb-6"
           style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2 }}
         >
-          <View className="absolute top-0 left-0 right-0 h-[3px] bg-[#1A9B5A]" />
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-3">
               <View className="w-10 h-10 rounded-xl bg-[#E8F8F0] items-center justify-center">
