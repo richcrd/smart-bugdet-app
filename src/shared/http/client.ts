@@ -1,6 +1,6 @@
 import { createAuthRefresh } from "axios-auth-refresh";
 import { AxiosError, create, InternalAxiosRequestConfig } from "axios";
-import { ENV } from "@/src/config/env";
+import { ENV } from "@/src/shared/config/env";
 
 type AuthHandlers = {
   getAccessToken(): string | null;

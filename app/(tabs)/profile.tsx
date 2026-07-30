@@ -1,1 +1,1 @@
-export { default } from "@/src/features/screens/profile";
+export { default } from "@/src/features/profile/screens/profile";

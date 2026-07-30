@@ -5,8 +5,8 @@ import { useCallback, useRef } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { BarChart3, User, Plus, Banknote } from "lucide-react-native";
 
-import { AddTransactionForm } from "@/src/features/screens/AddTransactionForm";
-import { colors }from "@/src/features/constants/colors";
+import { AddTransactionForm } from "@/src/features/transactions/AddTransactionForm";
+import { colors } from "@/src/shared/constants/colors";
 
 function AddTabButton({ onPress }: { onPress: () => void }) {
   return (

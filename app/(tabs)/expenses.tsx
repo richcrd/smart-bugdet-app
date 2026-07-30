@@ -1,1 +1,1 @@
-export { default } from "@/src/features/screens/expenses";
+export { default } from "@/src/features/expenses/expenses";

@@ -9,12 +9,13 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Toaster } from "sonner-native";
 
 import { initializeAds } from "@/src/features/ads/consent";
-import { authRepository } from "@/src/features/data/auth";
-import LoadingScreen from "@/src/features/screens/LoadingScreen";
-import { useAuthStore } from "@/src/features/stores/auth.store";
-import { usePreferencesStore } from "@/src/features/stores/preferences.store";
+import { authRepository } from "@/src/features/auth/api/auth";
+import LoadingScreen from "@/src/shared/components/ui/LoadingScreen";
+import { useAuthStore } from "@/src/features/auth/stores/auth.store";
+import { usePreferencesStore } from "@/src/features/profile/stores/preferences.store";
 import { configureHttpAuth } from "@/src/shared/http/client";
 import { queryClient } from "@/src/shared/http/queryClient";
+import { ErrorBoundary } from "@/src/shared/components/feedback/ErrorBoundary";
 
 export const unstable_settings = {
   initialRouteName: "(public)",
@@ -77,7 +78,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <BottomSheetModalProvider>
-          <Stack screenOptions={{ headerShown: false }} />
+          <ErrorBoundary>
+            <Stack screenOptions={{ headerShown: false }} />
+          </ErrorBoundary>
           <StatusBar style="dark" />
           <Toaster />
         </BottomSheetModalProvider>
