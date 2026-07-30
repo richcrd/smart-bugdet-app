@@ -21,18 +21,12 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "#c2bdbdd5",
-    
-
   },
 
   passwordContainer: {
   flexDirection: "row",
   alignItems: "center",
-  borderWidth: 1,
-  borderColor: "#c2bdbdd5",
-  borderRadius: 8,
+  borderRadius: 12,
   paddingHorizontal: 10,
   marginBottom: 15,
   backgroundColor: "#F3F4F6",
