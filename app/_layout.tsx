@@ -16,6 +16,7 @@ import { usePreferencesStore } from "@/src/features/profile/stores/preferences.s
 import { configureHttpAuth } from "@/src/shared/http/client";
 import { queryClient } from "@/src/shared/http/queryClient";
 import { ErrorBoundary } from "@/src/shared/components/feedback/ErrorBoundary";
+import '../global.css';
 
 export const unstable_settings = {
   initialRouteName: "(public)",
