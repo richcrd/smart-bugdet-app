@@ -38,6 +38,7 @@ export function AddTransactionForm({ onSave }: Props) {
   const { data: categories } = useUserCategories();
   const createTransaction = useCreateTransaction();
   const [sheetType, setSheetType] = useState<SheetType>(null);
+  const [sheetSnapPoints, setSheetSnapPoints] = useState(["60%"]);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   const [type, setType] = useState<TransactionType>("gasto");
@@ -60,6 +61,7 @@ export function AddTransactionForm({ onSave }: Props) {
 
   const openSheet = (nextSheetType: SheetType) => {
     setSheetType(nextSheetType);
+    setSheetSnapPoints(nextSheetType === "date" ? ["60%"] : ["50%"]);
     bottomSheetRef.current?.present();
   };
 
@@ -223,7 +225,7 @@ export function AddTransactionForm({ onSave }: Props) {
 
         <BottomSheetModal
           ref={bottomSheetRef}
-          snapPoints={["25%"]}
+          snapPoints={sheetSnapPoints}
           enableDynamicSizing={false}
           enablePanDownToClose={true}
           keyboardBehavior="extend"
