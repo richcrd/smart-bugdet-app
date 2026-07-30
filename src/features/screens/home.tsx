@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { useDashboard, useTransactions } from "../hooks/useDashboard";
 import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from "../hooks/useNotifications";
@@ -51,14 +51,15 @@ function getGreeting(): string {
 
 export default function Home() {
   const { data: profile } = useUserProfile();
-  const { data: summary, isLoading: isSummaryLoading, refetch: refetchSummary, isRefetching: isRefetchingSummary } = useDashboard();
-  const { data: transaction, isLoading: isTransactionLoading, refetch: refetchTransactions, isRefetching: isRefetchingTransactions } = useTransactions();
+  const { data: summary, isLoading: isSummaryLoading, refetch: refetchSummary } = useDashboard();
+  const { data: transaction, isLoading: isTransactionLoading, refetch: refetchTransactions } = useTransactions();
   const { data: notifications } = useNotifications();
   const markNotificationRead = useMarkNotificationRead();
   const markAllNotificationsRead = useMarkAllNotificationsRead();
 
   const notificationsSheetRef = useRef<BottomSheet>(null);
   const unreadCount = notifications?.filter((item) => !item.isRead).length ?? 0;
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   const renderNotificationsBackdrop = useCallback((props: any) => (
     <BottomSheetBackdrop
@@ -70,8 +71,8 @@ export default function Home() {
   ), []);
 
   const handleRefresh = () => {
-    refetchSummary();
-    refetchTransactions();
+    setIsManualRefreshing(true);
+    Promise.all([refetchSummary(), refetchTransactions()]).finally(() => setIsManualRefreshing(false));
   };
 
   const renderNotificationItem = ({ item }: { item: NotificationResponse }) => (
@@ -106,7 +107,7 @@ export default function Home() {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContent}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-        refreshing={isRefetchingSummary || isRefetchingTransactions}
+        refreshing={isManualRefreshing}
         onRefresh={handleRefresh}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={

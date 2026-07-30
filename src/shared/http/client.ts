@@ -60,6 +60,7 @@ createAuthRefresh(api, async () => {
   {
     shouldRefresh: (error: AxiosError) => {
       if (auth === null) return false;
+      if (error.response?.status !== 401) return false;
 
       const url = error.config?.url || "";
       const isPublicRoute = PUBLIC_PATHS.some((path) => url.startsWith(path));

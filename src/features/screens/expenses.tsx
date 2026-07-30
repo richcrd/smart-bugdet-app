@@ -1,5 +1,5 @@
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTransactions } from "../hooks/useDashboard";
 import { formatCurrency } from "@/src/shared/utils/common";
@@ -21,7 +21,8 @@ type TransactionItem = {
 };
 
 export default function Expenses() {
-  const { data: transactions, isLoading, isRefetching, refetch } = useTransactions();
+  const { data: transactions, isLoading, refetch } = useTransactions();
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   const expenses = useMemo(
     () => (
@@ -68,8 +69,8 @@ export default function Expenses() {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshing={isRefetching}
-        onRefresh={refetch}
+        refreshing={isManualRefreshing}
+        onRefresh={() => { setIsManualRefreshing(true); refetch().finally(() => setIsManualRefreshing(false)); }}
         ListHeaderComponent={
           <View style={styles.header}>
             <View>
