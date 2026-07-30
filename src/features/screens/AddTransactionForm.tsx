@@ -1,7 +1,6 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import React, { useCallback, useRef, useState } from "react";
 import {
-  Alert,
   Text,
   TouchableOpacity,
   View,
@@ -12,7 +11,6 @@ import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { useCreateTransaction, useDashboard } from "../hooks/useDashboard";
 import { useWallets } from "../hooks/useWallets";
 import { styles } from "../styles/AddTransactionStyles";
-import { useUserCategories } from "../hooks/useUserData";
 import { CategorySheetContent } from "./add-transaction/CategorySheetContent";
 import { PaymentMethodSheetContent } from "./add-transaction/PaymentMethodSheetContent";
 import { TransactionTypeToggle } from "./add-transaction/TransactionTypeToggle";
@@ -21,7 +19,8 @@ import { formatPrettyDate, toLocalDateString } from "./add-transaction/types";
 import type { SelectableItem, SheetType, TransactionType } from "./add-transaction/types";
 import { toast } from "sonner-native";
 import { DatePickerSheet } from "@/src/shared/components/DatePickerSheet";
-import { useUserPaymentMethods } from "../hooks/useUserData";
+import { getApiError } from "@/src/shared/utils/common";
+import { useUserPaymentMethods, useUserCategories } from "../hooks/useUserData";
 
 const TRANSACTION_TYPE_IDS: Record<TransactionType, number> = {
   gasto: 1,
@@ -136,9 +135,12 @@ export function AddTransactionForm({ onSave }: Props) {
         transactionDate: toLocalDateString(date),
       },
       {
-        onSuccess: () => onSave(),
-        onError: () => {
-          Alert.alert("Error", "No se pudo guardar el movimiento. Intenta de nuevo.");
+        onSuccess: (data) => {
+          toast.success(data.message);
+          onSave();
+        },
+        onError: (error) => {
+          toast.error(getApiError(error).message);
         },
       },
     );
