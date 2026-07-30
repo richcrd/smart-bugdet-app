@@ -1,300 +1,214 @@
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View, Dimensions } from "react-native";
+import { ActivityIndicator, RefreshControl, ScrollView, Text, View, Dimensions } from "react-native";
 import React, { useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Svg, Path, Circle, Line } from "react-native-svg";
-import { useDashboard, useTransactions } from "../home/hooks/useDashboard";
+import { LineChart } from "react-native-gifted-charts";
+import { useAnalytics } from "./hooks/useAnalytics";
 import { formatCurrency } from "@/src/shared/utils/common";
-import { colors } from "../../shared/constants/colors";
-import { TrendingUp, TrendingDown, CircleDollarSign } from "lucide-react-native";
+import { TrendingUp, TrendingDown, Wallet } from "lucide-react-native";
+import type { MonthlyTrendItem } from "./api/analytics";
 
-type TrendPoint = {
-  label: string;
-  value: number;
-  key: string;
-};
+const MONTH_LABELS = [
+  "ene", "feb", "mar", "abr", "may", "jun",
+  "jul", "ago", "sep", "oct", "nov", "dic",
+];
 
-type TransactionItem = {
-  id: number;
-  amount: number;
-  transactionDate: string;
-  transactionTypeCode: string;
-};
-
-function parseTransactionDate(value: string) {
-  const parsed = new Date(value);
-  if (!Number.isNaN(parsed.getTime())) {
-    return parsed;
-  }
-
-  const normalized = value.replace(/\./g, "").replace(/-/g, "/");
-  return new Date(normalized);
-}
+const screenWidth = Dimensions.get("window").width;
+const CHART_WIDTH = screenWidth - 72;
 
 export default function Analytics() {
-  const { data: summary, isLoading: isSummaryLoading, refetch: refetchSummary, isRefetching: isRefetchingSummary } = useDashboard();
-  const { data: transactions, isLoading: isTransactionsLoading, refetch: refetchTransactions, isRefetching: isRefetchingTransactions } = useTransactions();
+  const { data, isLoading, refetch, isRefetching } = useAnalytics();
 
-  const trendData = useMemo<TrendPoint[]>(() => {
-    const now = new Date();
-    const months = Array.from({ length: 6 }).map((_, index) => {
-      const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
-      const label = date.toLocaleString("es-ES", { month: "short" }).replace(".", "");
-      return { label, value: 0, key: `${date.getFullYear()}-${date.getMonth() + 1}` };
-    });
+  const chartData = useMemo(() => {
+    return (data?.monthlyTrend ?? []).map((m: MonthlyTrendItem) => ({
+      value: m.expenses,
+      label: MONTH_LABELS[m.month - 1] ?? `${m.month}`,
+    }));
+  }, [data?.monthlyTrend]);
 
-    (transactions ?? []).forEach((transaction: TransactionItem) => {
-      if (transaction.transactionTypeCode !== "EXPENSE") return;
-      const date = parseTransactionDate(transaction.transactionDate);
-      if (Number.isNaN(date.getTime())) return;
-      const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
-      const month = months.find((item) => item.key === key);
-      if (month) {
-        month.value += transaction.amount ?? 0;
-      }
-    });
+  const hasData = chartData.some((d) => d.value > 0);
 
-    return months;
-  }, [transactions]);
-
-  const isLoading = isSummaryLoading || isTransactionsLoading;
-  const totalExpense = summary?.totalExpenseMonth ?? 0;
-  const totalIncome = summary?.totalIncomeMonth ?? 0;
-  const available = summary?.currentBalance ?? 0;
-  const symbol = summary?.currencySymbol ?? "C$";
-
-  const chartDimensions = useMemo(() => {
-    const screenWidth = Dimensions.get("window").width;
-    const width = screenWidth - 72;
-    const height = 160;
-    const padding = 20;
-    const maxValue = Math.max(...trendData.map((item) => item.value), 1);
-    const stepX = (width - padding * 2) / Math.max(trendData.length - 1, 1);
-
-    const points = trendData.map((item, index) => {
-      const x = padding + index * stepX;
-      const y = height - padding - (item.value / maxValue) * (height - padding * 2);
-      return { x, y };
-    });
-
-    return {
-      path: points
-        .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
-        .join(" "),
-      width,
-      height,
-      padding,
-    };
-  }, [trendData]);
+  const totalExpense = data?.totalExpenseMonth ?? 0;
+  const totalIncome = data?.totalIncomeMonth ?? 0;
+  const available = data?.currentBalance ?? 0;
+  const symbol = data?.currencySymbol ?? "C$";
 
   if (isLoading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View className="flex-1 items-center justify-center bg-[#F2F3F7]">
+        <ActivityIndicator size="large" color="#1A9B5A" />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView className="flex-1 bg-[#F2F3F7]" edges={["top", "left", "right"]}>
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
+        className="flex-1"
+        contentContainerClassName="px-5 pb-8 pt-4"
         refreshControl={
           <RefreshControl
-            refreshing={isRefetchingSummary || isRefetchingTransactions}
-            onRefresh={() => {
-              refetchSummary();
-              refetchTransactions();
-            }}
-            tintColor={colors.primary}
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor="#1A9B5A"
           />
         }
       >
-        <Text style={styles.title}>Análisis Mensual</Text>
-        <View style={styles.cardRow}>
-          <View style={[styles.analysisCard, styles.expenseCard]}>
-            <Text style={styles.cardLabel}>Gastos</Text>
-            <Text style={styles.cardValue}>{formatCurrency(totalExpense, symbol)}</Text>
-            <View style={styles.cardBadge}>
-              <TrendingDown size={14} color={colors.expense} strokeWidth={2} />
-              <Text style={styles.cardBadgeText}>Gastos</Text>
+        <View className="mb-6">
+          <Text className="text-[30px] font-extrabold text-[#0A0F1E] mt-1.5">
+            Análisis Mensual
+          </Text>
+        </View>
+
+        <View className="flex-row gap-3 mb-3">
+          <View
+            className="flex-1 bg-white rounded-3xl p-5 min-h-[160px] justify-between overflow-hidden"
+            style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2 }}
+          >
+            <View className="absolute top-0 left-0 right-0 h-[3px] bg-[#DC2626]" />
+            <View>
+              <View className="w-10 h-10 rounded-xl bg-[#FEE2E2] items-center justify-center mb-3">
+                <TrendingDown size={20} color="#DC2626" strokeWidth={2.5} />
+              </View>
+              <Text className="text-[13px] font-semibold text-[#6B7280]">Gastos</Text>
+            </View>
+            <View>
+              <Text
+                className="text-[24px] font-extrabold text-[#0A0F1E]"
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.6}
+              >
+                {formatCurrency(totalExpense, symbol)}
+              </Text>
+              <View className="flex-row items-center mt-1.5">
+                <View className="w-1.5 h-1.5 rounded-full bg-[#DC2626] mr-1.5" />
+                <Text className="text-[11px] font-bold text-[#9CA3AF]">Este mes</Text>
+              </View>
             </View>
           </View>
-          <View style={[styles.analysisCard, styles.incomeCard]}>
-            <Text style={styles.cardLabel}>Ingresos</Text>
-            <Text style={styles.cardValue}>{formatCurrency(totalIncome, symbol)}</Text>
-            <View style={styles.cardBadge}>
-              <TrendingUp size={14} color={colors.income} strokeWidth={2} />
-              <Text style={styles.cardBadgeText}>Ingresos</Text>
+          <View
+            className="flex-1 bg-white rounded-3xl p-5 min-h-[160px] justify-between overflow-hidden"
+            style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2 }}
+          >
+            <View className="absolute top-0 left-0 right-0 h-[3px] bg-[#16A34A]" />
+            <View>
+              <View className="w-10 h-10 rounded-xl bg-[#DCFCE7] items-center justify-center mb-3">
+                <TrendingUp size={20} color="#16A34A" strokeWidth={2.5} />
+              </View>
+              <Text className="text-[13px] font-semibold text-[#6B7280]">Ingresos</Text>
             </View>
-          </View>
-          <View style={[styles.analysisCard, styles.availableCard]}>
-            <Text style={styles.cardLabel}>Disponible</Text>
-            <Text style={styles.cardValue}>{formatCurrency(available, symbol)}</Text>
-            <View style={styles.cardBadge}>
-              <CircleDollarSign size={14} color={colors.primary} strokeWidth={2} />
-              <Text style={styles.cardBadgeText}>Saldo</Text>
+            <View>
+              <Text
+                className="text-[24px] font-extrabold text-[#0A0F1E]"
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.6}
+              >
+                {formatCurrency(totalIncome, symbol)}
+              </Text>
+              <View className="flex-row items-center mt-1.5">
+                <View className="w-1.5 h-1.5 rounded-full bg-[#16A34A] mr-1.5" />
+                <Text className="text-[11px] font-bold text-[#9CA3AF]">Este mes</Text>
+              </View>
             </View>
           </View>
         </View>
+        <View
+          className="bg-white rounded-3xl p-5 min-h-[100px] justify-between overflow-hidden mb-6"
+          style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2 }}
+        >
+          <View className="absolute top-0 left-0 right-0 h-[3px] bg-[#1A9B5A]" />
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-3">
+              <View className="w-10 h-10 rounded-xl bg-[#E8F8F0] items-center justify-center">
+                <Wallet size={20} color="#1A9B5A" strokeWidth={2.5} />
+              </View>
+              <View>
+                <Text className="text-[15px] font-bold text-[#0A0F1E]">Disponible</Text>
+                <View className="flex-row items-center mt-0.5">
+                  <View className="w-1.5 h-1.5 rounded-full bg-[#1A9B5A] mr-1.5" />
+                  <Text className="text-[11px] font-bold text-[#9CA3AF]">Saldo actual</Text>
+                </View>
+              </View>
+            </View>
+            <Text
+              className="text-[26px] font-extrabold text-[#1A9B5A] text-right flex-shrink ml-4"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.5}
+            >
+              {formatCurrency(available, symbol)}
+            </Text>
+          </View>
+        </View>
 
-        <View style={styles.chartSection}>
-          <Text style={styles.sectionTitle}>Tendencias de gastos</Text>
-          <View style={styles.chartWrapper}>
-            <Svg width={chartDimensions.width} height={chartDimensions.height}>
-              {[0, 1, 2, 3].map((index) => {
-                const y = 40 + index * 30;
-                return <Line key={index} x1={chartDimensions.padding} x2={chartDimensions.width - chartDimensions.padding} y1={y} y2={y} stroke={colors.border} strokeWidth={1} opacity={0.3} />;
-              })}
-              <Path d={chartDimensions.path} fill="none" stroke={colors.primary} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
-              {trendData.map((item, index) => {
-                const maxValue = Math.max(...trendData.map((t) => t.value), 1);
-                const stepX = (chartDimensions.width - chartDimensions.padding * 2) / Math.max(trendData.length - 1, 1);
-                const x = chartDimensions.padding + index * stepX;
-                const y = chartDimensions.height - chartDimensions.padding - (item.value / maxValue) * (chartDimensions.height - chartDimensions.padding * 2);
-                return <Circle key={item.key} cx={x} cy={y} r={4} fill={colors.primary} />;
-              })}
-            </Svg>
-            <View style={styles.labelsRow}>
-              {trendData.map((item) => (
-                <Text key={item.key} style={styles.chartLabel}>
-                  {item.label}
+        <View
+          className="bg-white rounded-3xl p-5 mb-6"
+          style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 }}
+        >
+          <View className="flex-row items-center justify-between mb-5">
+            <View>
+              <Text className="text-[17px] font-bold text-[#0A0F1E]">Tendencia de Gastos</Text>
+              <Text className="text-[13px] font-semibold text-[#6B7280] mt-0.5">Últimos 6 meses</Text>
+            </View>
+            {hasData && (
+              <View className="bg-[#E8F8F0] px-3.5 py-1.5 rounded-full">
+                <Text className="text-[12px] font-bold text-[#1A9B5A]">
+                  Total {formatCurrency(chartData.reduce((a, b) => a + b.value, 0), symbol)}
                 </Text>
-              ))}
-            </View>
+              </View>
+            )}
           </View>
+
+          <LineChart
+            data={chartData}
+            width={CHART_WIDTH}
+            height={180}
+            areaChart
+            color="#1A9B5A"
+            thickness={3}
+            startFillColor="#1A9B5A"
+            endFillColor="#1A9B5A"
+            startOpacity={0.12}
+            endOpacity={0.01}
+            dataPointsColor="#1A9B5A"
+            dataPointsRadius={4}
+            initialSpacing={20}
+            endSpacing={20}
+            hideYAxisText
+            yAxisColor="transparent"
+            xAxisColor="#E5E7EB"
+            xAxisThickness={1}
+            showVerticalLines={false}
+            noOfSections={3}
+            rulesColor="#E5E7EB"
+            rulesThickness={1}
+            xAxisLabelTextStyle={{
+              color: "#9CA3AF",
+              fontSize: 11,
+              fontWeight: "600",
+            }}
+            scrollToEnd={false}
+            isAnimated
+          />
+
         </View>
 
-        {trendData.every((point) => point.value === 0) && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Aún no hay datos de gastos</Text>
-            <Text style={styles.emptyDescription}>Registra transacciones para ver el análisis y la tendencia aquí.</Text>
+        {!hasData && (
+          <View
+            className="bg-white rounded-3xl p-8 items-center"
+            style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+          >
+            <View className="w-14 h-14 rounded-2xl bg-[#F2F3F7] items-center justify-center mb-4">
+              <TrendingDown size={24} color="#9CA3AF" strokeWidth={1.5} />
+            </View>
+            <Text className="text-[17px] font-bold text-[#0A0F1E] mb-2">Sin datos de gastos</Text>
+            <Text className="text-[14px] font-medium text-[#6B7280] text-center leading-6">
+              Registra transacciones para visualizar{"\n"}el análisis y la tendencia de tus gastos.
+            </Text>
           </View>
         )}
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  scroll: {
-    flex: 1,
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.bg,
-  },
-  content: {
-    padding: 20,
-    paddingBottom: 28,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: colors.textPrimary,
-    marginBottom: 16,
-  },
-  cardRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 22,
-  },
-  analysisCard: {
-    flex: 1,
-    borderRadius: 20,
-    padding: 16,
-    minHeight: 140,
-    justifyContent: "space-between",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  expenseCard: {
-    backgroundColor: colors.expenseBg,
-  },
-  incomeCard: {
-    backgroundColor: colors.incomeBg,
-  },
-  availableCard: {
-    backgroundColor: colors.bgCard,
-  },
-  cardLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  cardValue: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: colors.textPrimary,
-    marginBottom: 12,
-  },
-  cardBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  cardBadgeText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: "700",
-  },
-  chartSection: {
-    marginTop: 4,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.textPrimary,
-    marginBottom: 14,
-  },
-  chartWrapper: {
-    backgroundColor: colors.bgCard,
-    borderRadius: 24,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  labelsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 12,
-    paddingHorizontal: 8,
-  },
-  chartLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: "600",
-  },
-  emptyState: {
-    marginTop: 28,
-    padding: 20,
-    borderRadius: 20,
-    backgroundColor: colors.bgCard,
-    alignItems: "center",
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.textPrimary,
-    marginBottom: 8,
-  },
-  emptyDescription: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    textAlign: "center",
-  },
-});
