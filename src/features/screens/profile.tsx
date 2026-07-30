@@ -25,15 +25,18 @@ type MenuRowProps = {
   onPress?: () => void;
   last?: boolean;
   loading?: boolean;
+  danger?: boolean;
 };
 
-function MenuRow({ label, onPress, last, loading }: MenuRowProps) {
+function MenuRow({ label, onPress, last, loading, danger }: MenuRowProps) {
   return (
     <View>
       <TouchableOpacity style={styles.menuRow} onPress={onPress} disabled={loading} activeOpacity={0.6}>
-        <Text style={styles.menuLabel}>{label}</Text>
+        <Text style={[styles.menuLabel, danger && { color: colors.danger }]}>{label}</Text>
         {loading ? (
-          <ActivityIndicator size="small" color={colors.primary} />
+          <ActivityIndicator size="small" color={danger ? colors.danger : colors.primary} />
+        ) : danger ? (
+          <LogOut size={18} color={colors.danger} strokeWidth={1.8} />
         ) : (
           <ChevronRight size={18} color={colors.textTertiary} strokeWidth={1.8} />
         )}
@@ -510,22 +513,10 @@ export default function Profile() {
         <Text style={styles.sectionLabel}>Soporte</Text>
         <View style={styles.menuCard}>
           <MenuRow label="Contactar Soporte" onPress={() => Linking.openURL("mailto:richardrrc1204@gmail.com")} />
-          <MenuInfoRow label="Versión" info={`v${Constants.expoConfig?.version ?? "1.0.0"}`} last />
+          <MenuInfoRow label="Versión" info={`v${Constants.expoConfig?.version ?? "1.0.0"}`} />
+          <MenuRow label="Cerrar Sesión" onPress={handleLogout} danger loading={loading} last />
         </View>
       </View>
-
-      <TouchableOpacity style={styles.logoutRow} onPress={handleLogout} disabled={loading} activeOpacity={0.7}>
-        {loading ? (
-          <ActivityIndicator size="small" color={colors.danger} />
-        ) : (
-          <>
-            <View style={{ marginRight: 8 }}>
-              <LogOut size={18} color={colors.danger} strokeWidth={1.8} />
-            </View>
-            <Text style={styles.logoutText}>Cerrar Sesión</Text>
-          </>
-        )}
-      </TouchableOpacity>
       </ScrollView>
 
         <BottomSheetModal
@@ -851,17 +842,6 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
     marginHorizontal: 18,
-  },
-  logoutRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 6,
-    marginLeft: 4,
-  },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: colors.danger,
   },
   sheetHeaderRow: {
     flexDirection: "row",
