@@ -1,20 +1,35 @@
-import type { AxiosRequestConfig } from "axios";
 import { api } from "./client";
-import { unwrap, type ApiResponse } from "./types";
 
-export async function get<T>(
-  url: string,
-  config?: AxiosRequestConfig,
-): Promise<T> {
-  const { data } = await api.get<ApiResponse<T>>(url, config);
-  return unwrap(data);
+export type ApiResponse<T> = {
+  code: number;
+  message: string;
+  response: T;
+};
+
+export type ApiError = {
+  code: number;
+  message: string;
+  response?: unknown;
 }
 
-export async function post<TResponse, TBody = unknown>(
-  url: string,
-  body?: TBody,
-  config?: AxiosRequestConfig,
-): Promise<TResponse> {
-  const { data } = await api.post<ApiResponse<TResponse>>(url, body, config);
-  return unwrap(data);
+export const http = {
+  get: <T>(url: string) => {
+    return api.get<ApiResponse<T>>(url).then((r) => r.data)
+  },
+
+  post: <T>(url: string, body?: unknown) => {
+    return api.post<ApiResponse<T>>(url, body).then((r) => r.data)
+  },
+
+  put: <T>(url: string, body?: unknown) => {
+    return api.put<ApiResponse<T>>(url, body).then((r) => r.data)
+  },
+
+  patch: <T>(url: string, body?: unknown) => {
+    return api.patch<ApiResponse<T>>(url, body).then((r) => r.data)
+  },
+
+  delete: <T>(url: string) => {
+    return api.delete<ApiResponse<T>>(url).then((r) => r.data)
+  }
 }
