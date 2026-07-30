@@ -17,8 +17,12 @@ export const formatCurrency = (value: number | string, symbol: string) => {
 };
 
 export function getApiError(error: unknown): ApiError {
-  if (isAxiosError<ApiError>(error) && error.response?.data) {
-    return error.response.data;
+  if (isAxiosError(error) && error.response?.data) {
+    const d = error.response.data as Record<string, unknown>;
+    return {
+      code: (d.code as number) ?? (d.status as number) ?? 500,
+      message: (d.message as string) ?? (d.title as string) ?? "Ocurrió un error inesperado.",
+    };
   }
 
   return {

@@ -10,7 +10,7 @@ export type UpdateProfileRequest = {
 };
 
 export type ChangePasswordRequest = {
-  currentPassowrd: string;
+  currentPassword: string;
   newPassword: string;
 };
 

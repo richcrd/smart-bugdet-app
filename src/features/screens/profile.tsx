@@ -1,7 +1,7 @@
 import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Check, ChevronRight, LogOut, Pencil, Trash2, X } from "lucide-react-native";
+import { Check, ChevronRight, Eye, EyeOff, LogOut, Pencil, Trash2, X } from "lucide-react-native";
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetFlatList, BottomSheetScrollView, BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import { toast } from "sonner-native";
 
@@ -13,12 +13,12 @@ import { useCatalog, useCurrencies } from "../hooks/useCatalog";
 import { useCreateWallet, useDeleteWallet, useSetDefaultWallet, useUpdateWallet, useWallets } from "../hooks/useWallets";
 import { registerForPushNotifications } from "../notifications/register";
 import { colors } from "../constants/colors";
-import { useUpdateProfile, useUserProfile } from "../hooks/useUserProfile";
+import { useChangePassword, useUpdateProfile, useUserProfile } from "../hooks/useUserProfile";
 import { DatePickerSheet } from "@/src/shared/components/DatePickerSheet";
 import { CategorySheetContent } from "./profile/CategorySheetContent";
 import { PaymentMethodSheetContent } from "./profile/PaymentMethodSheetContent";
 
-type SheetType = "languages" | "wallets" | "balanceAlert" | "editProfile" | "categories" | "paymentMethods" | null;
+type SheetType = "languages" | "wallets" | "balanceAlert" | "editProfile" | "categories" | "paymentMethods" | "changePassword" | null;
 
 type MenuRowProps = {
   label: string;
@@ -100,6 +100,11 @@ export default function Profile() {
   const [savingItemId, setSavingItemId] = useState<number | null>(null);
   const [balanceAlertInput, setBalanceAlertInput] = useState("");
   const [savingBalanceAlert, setSavingBalanceAlert] = useState(false);
+  const [passwordCurrent, setPasswordCurrent] = useState("");
+  const [passwordNew, setPasswordNew] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const changePassword = useChangePassword();
   const { data: languages, isLoading: isLanguageLoading } = useCatalog();
   const { data: currencies } = useCurrencies();
   const { data: wallets, isLoading: isWalletsLoading } = useWallets();
@@ -223,6 +228,29 @@ export default function Profile() {
       setSavingBalanceAlert(false);
     }
   }, [balanceAlertInput, setBalanceAlertThreshold]);
+
+  const handleChangePassword = useCallback(async () => {
+    if (!passwordCurrent.trim() || !passwordNew.trim()) {
+      toast.error("Ambos campos son requeridos");
+      return;
+    }
+    if (passwordNew.trim().length < 12) {
+      toast.error("La nueva contraseña debe tener al menos 12 caracteres");
+      return;
+    }
+    try {
+      const result = await changePassword.mutateAsync({
+        currentPassword: passwordCurrent.trim(), 
+        newPassword: passwordNew.trim()
+      });
+      toast.success(result.message);
+      setPasswordCurrent("");
+      setPasswordNew("");
+      bottomSheetRef.current?.dismiss();
+    } catch (error) {
+      toast.error(getApiError(error).message);
+    }
+  }, [passwordCurrent, passwordNew, changePassword]);
 
   const handleSaveProfile = useCallback(async () => {
     const body: Record<string, string> = {};
@@ -472,6 +500,13 @@ export default function Profile() {
       </View>
 
       <View style={styles.sectionGroup}>
+        <Text style={styles.sectionLabel}>Seguridad</Text>
+        <View style={styles.menuCard}>
+          <MenuRow label="Cambiar Contraseña" onPress={() => openSheet("changePassword")} last />
+        </View>
+      </View>
+
+      <View style={styles.sectionGroup}>
         <Text style={styles.sectionLabel}>Soporte</Text>
         <View style={styles.menuCard}>
           <MenuRow label="Contactar Soporte" onPress={() => Linking.openURL("mailto:richardrrc1204@gmail.com")} />
@@ -504,6 +539,8 @@ export default function Profile() {
           setSheetSnapPoints(["75%"]);
           setRenamingWalletId(null);
           closeWalletForm();
+          setPasswordCurrent("");
+          setPasswordNew("");
         }}
         backdropComponent={renderBackdrop}
       >
@@ -685,6 +722,51 @@ export default function Profile() {
             <CategorySheetContent onSnapChange={setSheetSnapPoints} />
           ) : sheetType === "paymentMethods" ? (
             <PaymentMethodSheetContent onSnapChange={setSheetSnapPoints} />
+          ) : sheetType === "changePassword" ? (
+            <BottomSheetScrollView contentContainerStyle={styles.createForm}>
+              <Text style={[styles.sheetTitle, { paddingHorizontal: 0 }]}>Cambiar Contraseña</Text>
+              <Text style={styles.fieldLabel}>Contraseña actual</Text>
+              <View>
+                <BottomSheetTextInput
+                  style={styles.textInput}
+                  placeholder="Contraseña actual"
+                  placeholderTextColor={colors.textTertiary}
+                  secureTextEntry={!showCurrentPassword}
+                  value={passwordCurrent}
+                  onChangeText={setPasswordCurrent}
+                  maxLength={100}
+                />
+                <TouchableOpacity style={styles.passwordToggle} onPress={() => setShowCurrentPassword((v) => !v)}>
+                  {showCurrentPassword ? <EyeOff size={20} color={colors.textTertiary} strokeWidth={1.8} /> : <Eye size={20} color={colors.textTertiary} strokeWidth={1.8} />}
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.fieldLabel}>Nueva contraseña</Text>
+              <View>
+                <BottomSheetTextInput
+                  style={styles.textInput}
+                  placeholder="Nueva contraseña"
+                  placeholderTextColor={colors.textTertiary}
+                  secureTextEntry={!showNewPassword}
+                  value={passwordNew}
+                  onChangeText={setPasswordNew}
+                  maxLength={100}
+                />
+                <TouchableOpacity style={styles.passwordToggle} onPress={() => setShowNewPassword((v) => !v)}>
+                  {showNewPassword ? <EyeOff size={20} color={colors.textTertiary} strokeWidth={1.8} /> : <Eye size={20} color={colors.textTertiary} strokeWidth={1.8} />}
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                style={[styles.createButton, (!passwordCurrent.trim() || !passwordNew.trim()) && styles.createButtonDisabled]}
+                onPress={handleChangePassword}
+                disabled={!passwordCurrent.trim() || !passwordNew.trim() || changePassword.isPending}
+              >
+                {changePassword.isPending ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.createButtonText}>Guardar cambios</Text>
+                )}
+              </TouchableOpacity>
+            </BottomSheetScrollView>
           ) : (
             <>
               <Text style={styles.sheetTitle}>Idiomas</Text>
@@ -872,8 +954,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
+    paddingRight: 44,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  passwordToggle: {
+    position: "absolute",
+    right: 12,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+    padding: 4,
   },
   currencyPillRow: {
     flexDirection: "row",
