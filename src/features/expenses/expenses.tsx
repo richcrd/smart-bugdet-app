@@ -1,210 +1,152 @@
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React, { useMemo, useState } from "react";
+import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTransactions } from "../home/hooks/useDashboard";
+import { ChevronLeft, ChevronRight, TrendingDown, Wallet } from "lucide-react-native";
+import { useExpenses } from "./hooks/useExpenses";
 import { formatCurrency } from "@/src/shared/utils/common";
-import { colors, getContrastColor } from "../../shared/constants/colors";
-import { Wallet } from "lucide-react-native";
-import { getIconByKey } from "../../shared/constants/iconCatalog";
+import { getIconByKey } from "@/src/shared/constants/iconCatalog";
+import { getContrastColor } from "@/src/shared/constants/colors";
+import type { TransactionList } from "@/src/features/home/api/dashboard";
 
-type TransactionItem = {
-  id: number;
-  amount: number;
-  description: string;
-  transactionDate: string;
-  transactionTypeCode: string;
-  categoryName: string;
-  subcategoryName: string | null;
-  categoryIcon: string;
-  categoryColor: string;
-  currencySymbol: string;
-};
+const MONTHS = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return `${d.getDate()} ${MONTHS[d.getMonth()].toLowerCase().slice(0, 3)}`;
+}
+
+function TransactionItem({ item }: { item: TransactionList }) {
+  const Icon = getIconByKey(item.categoryIcon);
+  return (
+    <View className="flex-row items-center bg-white rounded-2xl px-4 py-3.5 mb-3" style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 }}>
+      <View className="w-[42px] h-[42px] rounded-xl items-center justify-center mr-3.5" style={{ backgroundColor: item.categoryColor ?? "#F3F4F6" }}>
+        <Icon size={18} color={getContrastColor(item.categoryColor ?? "#F3F4F6")} strokeWidth={1.8} />
+      </View>
+      <View className="flex-1">
+        <Text className="text-[15px] font-bold text-[#0A0F1E]" numberOfLines={1}>
+          {item.description || item.categoryName}
+        </Text>
+        <Text className="text-[12px] font-semibold text-[#6B7280] mt-0.5">
+          {item.subcategoryName || item.categoryName}
+          <Text className="text-[#9CA3AF] font-medium"> · {formatDate(item.transactionDate)}</Text>
+        </Text>
+      </View>
+      <Text className="text-[15px] font-extrabold text-[#DC2626] ml-3">
+        -{formatCurrency(item.amount, item.currencySymbol)}
+      </Text>
+    </View>
+  );
+}
 
 export default function Expenses() {
-  const { data: transactions, isLoading, refetch } = useTransactions();
-  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const { data, isLoading, isRefetching, refetch } = useExpenses(year, month);
 
-  const expenses = useMemo(
-    () => (
-      transactions ?? []).filter((item) => item.transactionTypeCode === "EXPENSE"),
-    [transactions]
-  );
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
 
-  const totalExpense = useMemo(
-    () => expenses.reduce((sum, item) => sum + (item.amount ?? 0), 0),
-    [expenses]
-  );
+  const minDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const currentDate = new Date(year, month - 1, 1);
+  const isMinMonth = currentDate <= minDate;
 
-  const renderItem = ({ item }: { item: TransactionItem }) => {
-    const Icon = getIconByKey(item.categoryIcon);
-    return (
-      <View style={styles.transactionCard}>
-        <View style={[styles.iconBox, { backgroundColor: item.categoryColor ?? colors.borderLight }]}> 
-          <Icon size={20} color={getContrastColor(item.categoryColor ?? colors.borderLight)} strokeWidth={1.8} />
-        </View>
-        <View style={styles.transactionInfo}>
-          <Text style={styles.transactionTitle} numberOfLines={2}>
-            {item.description || item.categoryName}
-          </Text>
-          <Text style={styles.transactionSubtitle}>{item.subcategoryName || item.categoryName}</Text>
-          <Text style={styles.transactionDate}>{item.transactionDate}</Text>
-        </View>
-        <Text style={styles.amountText}>- {formatCurrency(item.amount ?? 0, item.currencySymbol ?? "")}</Text>
-      </View>
-    );
+  const goPrev = () => {
+    if (isMinMonth) return;
+    if (month === 1) { setYear(year - 1); setMonth(12); }
+    else setMonth(month - 1);
   };
+
+  const goNext = () => {
+    if (!isCurrentMonth) {
+      if (month === 12) { setYear(year + 1); setMonth(1); }
+      else setMonth(month + 1);
+    }
+  };
+
+  const transactions = data?.transactions ?? [];
+  const totalExpenses = data?.totalExpenses ?? 0;
+  const symbol = data?.currencySymbol ?? "C$";
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View className="flex-1 items-center justify-center bg-[#F2F3F7]">
+        <ActivityIndicator size="large" color="#1A9B5A" />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <SafeAreaView className="flex-1 bg-[#F2F3F7]" edges={["top", "left", "right"]}>
       <FlatList
-        data={expenses}
+        data={transactions}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.content}
+        contentContainerClassName="px-5 pb-8 pt-4"
         showsVerticalScrollIndicator={false}
-        refreshing={isManualRefreshing}
-        onRefresh={() => { setIsManualRefreshing(true); refetch().finally(() => setIsManualRefreshing(false)); }}
+        refreshing={isRefetching}
+        onRefresh={refetch}
         ListHeaderComponent={
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.title}>Mis Gastos</Text>
-              <Text style={styles.subtitle}>Últimos 7 días</Text>
+          <View>
+            <View className="flex-row items-center justify-between mb-6">
+              <TouchableOpacity onPress={goPrev} disabled={isMinMonth} className="w-10 h-10 rounded-xl bg-white items-center justify-center" style={[{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }, isMinMonth && { opacity: 0.4 }]}>
+                <ChevronLeft size={20} color="#0A0F1E" strokeWidth={2.5} />
+              </TouchableOpacity>
+              <Text className="text-[18px] font-bold text-[#0A0F1E]">{MONTHS[month - 1]} {year}</Text>
+              <TouchableOpacity
+                onPress={goNext}
+                disabled={isCurrentMonth}
+                className="w-10 h-10 rounded-xl bg-white items-center justify-center"
+                style={[{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }, isCurrentMonth && { opacity: 0.4 }]}
+              >
+                <ChevronRight size={20} color="#0A0F1E" strokeWidth={2.5} />
+              </TouchableOpacity>
             </View>
-            <View style={styles.totalCard}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>{formatCurrency(totalExpense, expenses[0]?.currencySymbol ?? "C$")}</Text>
+            <View className="bg-white rounded-3xl p-5 mb-5 overflow-hidden" style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2 }}>
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center gap-3">
+                  <View className="w-11 h-11 rounded-xl bg-[#FEE2E2] items-center justify-center">
+                    <TrendingDown size={22} color="#DC2626" strokeWidth={2.5} />
+                  </View>
+                  <View>
+                    <Text className="text-[12px] font-semibold text-[#6B7280]">Gastos del mes</Text>
+                    <Text
+                      className="text-[22px] font-extrabold text-[#DC2626]"
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.6}
+                    >
+                      {formatCurrency(totalExpenses, symbol)}
+                    </Text>
+                  </View>
+                </View>
+                <View className="bg-[#FEE2E2] px-3 py-1.5 rounded-full">
+                  <Text className="text-[11px] font-bold text-[#DC2626]">{transactions.length} transacciones</Text>
+                </View>
+              </View>
             </View>
+            {transactions.length > 0 && (
+              <Text className="text-[13px] font-semibold text-[#9CA3AF] uppercase tracking-[1px] mb-3 px-0.5">
+                Transacciones
+              </Text>
+            )}
           </View>
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Wallet size={40} color={colors.textTertiary} strokeWidth={1.4} />
-            <Text style={styles.emptyTitle}>No hay gastos</Text>
-            <Text style={styles.emptySubtitle}>Añade un movimiento para verlo aquí.</Text>
+          <View className="items-center mt-16">
+            <View className="w-16 h-16 rounded-2xl bg-white items-center justify-center mb-4" style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
+              <Wallet size={28} color="#9CA3AF" strokeWidth={1.5} />
+            </View>
+            <Text className="text-[18px] font-bold text-[#0A0F1E] mb-2">Sin gastos</Text>
+            <Text className="text-[14px] font-medium text-[#6B7280] text-center leading-5 max-w-[220px]">
+              No hay gastos registrados en {MONTHS[month - 1].toLowerCase()}.
+            </Text>
           </View>
         }
-        renderItem={renderItem}
+        renderItem={TransactionItem}
       />
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.bg,
-  },
-  content: {
-    padding: 20,
-    paddingBottom: 28,
-  },
-  header: {
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  totalCard: {
-    marginTop: 16,
-    backgroundColor: colors.bgCard,
-    borderRadius: 18,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  totalLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: "500",
-    marginBottom: 6,
-  },
-  totalValue: {
-    fontSize: 24,
-    color: colors.textPrimary,
-    fontWeight: "800",
-  },
-  transactionCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.bgCard,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  iconBox: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 14,
-  },
-  transactionInfo: {
-    flex: 1,
-  },
-  transactionTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  transactionSubtitle: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  transactionDate: {
-    fontSize: 11,
-    color: colors.textTertiary,
-  },
-  amountText: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: colors.expense,
-  },
-  emptyContainer: {
-    marginTop: 56,
-    alignItems: "center",
-  },
-  emptyTitle: {
-    marginTop: 16,
-    fontSize: 18,
-    fontWeight: "700",
-    color: colors.textPrimary,
-  },
-  emptySubtitle: {
-    marginTop: 6,
-    fontSize: 13,
-    color: colors.textSecondary,
-    textAlign: "center",
-    maxWidth: 240,
-  },
-});
