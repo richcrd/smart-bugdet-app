@@ -16,6 +16,7 @@ export type TransactionList = {
   transactionTypeCode: string;
   transactionTypeName: string;
   categoryName: string;
+  subcategoryName: string | null;
   categoryIcon: string;
   categoryColor: string;
   currencyCode: string;

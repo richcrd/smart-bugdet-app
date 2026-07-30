@@ -1,13 +1,13 @@
 import { Text, TouchableOpacity, View } from "react-native";
 import { BottomSheetFlashList } from "@gorhom/bottom-sheet";
 import { Check, CreditCard } from "lucide-react-native";
-import type { PaymentMethodResponse } from "../../data/catalog";
+import type { UserPaymentMethodResponse } from "../../data/catalog";
 import { colors } from "../../constants/colors";
 import { styles } from "../../styles/AddTransactionStyles";
 import type { SelectableItem } from "./types";
 
 type Props = {
-  paymentMethods: PaymentMethodResponse[] | undefined;
+  paymentMethods: UserPaymentMethodResponse[] | undefined;
   selectedPaymentMethod: SelectableItem | null;
   onSelect: (item: SelectableItem) => void;
 };
@@ -26,7 +26,7 @@ export function PaymentMethodSheetContent({ paymentMethods, selectedPaymentMetho
           return (
             <TouchableOpacity
               style={[styles.sheetItem, isActive && styles.sheetItemActive]}
-              onPress={() => onSelect(item)}
+              onPress={() => onSelect({ id: item.id, name: item.name, paymentMethodId: item.paymentMethodId })}
               activeOpacity={0.6}
             >
               <View style={styles.sheetItemLeft}>

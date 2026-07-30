@@ -152,6 +152,11 @@ export const styles = StyleSheet.create({
     color: "#0F172A",
     marginTop: 2,
   },
+  itemSubvalue: {
+    fontSize: 13,
+    color: "#64748B",
+    marginTop: 1,
+  },
 
   separator: {
     height: 1,

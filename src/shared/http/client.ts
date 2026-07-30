@@ -11,6 +11,7 @@ type AuthHandlers = {
 export const api = create({
   baseURL: ENV.API_BASE_URL,
   headers: { Accept: "application/json" },
+  timeout: 15_000,
 });
 
 let auth: AuthHandlers | null = null;

@@ -16,7 +16,8 @@ export function useTransactions() {
     queryKey: ["transaction"],
     queryFn: () => dashboardRepository.transactionsList(),
     select: (data) => data.response,
-    refetchOnMount: true,
+    staleTime: 30_000,
+    retry: false,
   });
 }
 

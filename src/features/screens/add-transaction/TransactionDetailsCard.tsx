@@ -4,6 +4,7 @@ import { styles } from "../../styles/AddTransactionStyles";
 
 type Props = {
   categoryName: string | undefined;
+  subcategoryName: string | undefined;
   paymentMethodName: string | undefined;
   dateLabel: string;
   onPressCategory: () => void;
@@ -13,6 +14,7 @@ type Props = {
 
 export function TransactionDetailsCard({
   categoryName,
+  subcategoryName,
   paymentMethodName,
   dateLabel,
   onPressCategory,
@@ -30,6 +32,7 @@ export function TransactionDetailsCard({
           <View>
             <Text style={styles.itemTitle}>Categoría</Text>
             <Text style={styles.itemValue}>{categoryName || "Seleccionar"}</Text>
+            {subcategoryName && <Text style={styles.itemSubvalue}>{subcategoryName}</Text>}
           </View>
         </View>
 

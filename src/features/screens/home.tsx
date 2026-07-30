@@ -12,21 +12,17 @@ import { useDashboard, useTransactions } from "../hooks/useDashboard";
 import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from "../hooks/useNotifications";
 import type { NotificationResponse } from "../data/notifications";
 import {
-  Car,
-  CircleDollarSign,
-  House,
-  LucideIcon,
-  ShoppingCart,
-  UtensilsCrossed,
   TrendingDown,
   TrendingUp,
   Wallet,
   Bell,
 } from "lucide-react-native";
+import { getIconByKey } from "../constants/iconCatalog";
+import { useUserProfile } from "../hooks/useUserProfile";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatCurrency } from "@/src/shared/utils/common";
 import { AdBanner } from "../components/AdBanner";
-import { colors } from "../constants/colors";
+import { colors, getContrastColor } from "../constants/colors";
 
 function formatRelativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -42,14 +38,6 @@ function formatRelativeTime(iso: string): string {
   return `Hace ${days} d`;
 }
 
-const iconMap: Record<string, LucideIcon> = {
-  "shopping-cart": ShoppingCart,
-  car: Car,
-  home: House,
-  food: UtensilsCrossed,
-  salary: CircleDollarSign,
-};
-
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) {
@@ -62,6 +50,7 @@ function getGreeting(): string {
 }
 
 export default function Home() {
+  const { data: profile } = useUserProfile();
   const { data: summary, isLoading: isSummaryLoading, refetch: refetchSummary, isRefetching: isRefetchingSummary } = useDashboard();
   const { data: transaction, isLoading: isTransactionLoading, refetch: refetchTransactions, isRefetching: isRefetchingTransactions } = useTransactions();
   const { data: notifications } = useNotifications();
@@ -125,7 +114,7 @@ export default function Home() {
             <View style={styles.headerRow}>
               <View>
                 <Text style={styles.greeting}>{getGreeting()}</Text>
-                <Text style={styles.headerTitle}>Hola!</Text>
+                <Text style={styles.headerTitle}>Hola{profile?.firstName ? `, ${profile.firstName}` : ""}!</Text>
               </View>
               <TouchableOpacity style={styles.walletBadge} onPress={() => notificationsSheetRef.current?.expand()}>
                 <Bell size={22} color={colors.darkCard} strokeWidth={1.8} />
@@ -183,7 +172,7 @@ export default function Home() {
           </View>
         }
         renderItem={({ item }) => {
-          const CategoryIcon = iconMap[item.categoryIcon] ?? ShoppingCart;
+          const CategoryIcon = getIconByKey(item.categoryIcon);
           const isExpense = item.transactionTypeCode === "EXPENSE";
 
           return (
@@ -194,14 +183,14 @@ export default function Home() {
                   { backgroundColor: item.categoryColor ?? colors.borderLight },
                 ]}
               >
-                <CategoryIcon size={18} color={colors.textPrimary} strokeWidth={1.8} />
+                <CategoryIcon size={18} color={getContrastColor(item.categoryColor ?? colors.borderLight)} strokeWidth={1.8} />
               </View>
 
               <View style={styles.transactionInfo}>
                 <Text style={styles.description} numberOfLines={2}>
-                  {item.description || "Sin descripción"}
+                  {item.description || item.categoryName}
                 </Text>
-                <Text style={styles.category}>{item.categoryName}</Text>
+                <Text style={styles.category}>{item.subcategoryName || item.categoryName}</Text>
                 <Text style={styles.date}>{item.transactionDate}</Text>
               </View>
 

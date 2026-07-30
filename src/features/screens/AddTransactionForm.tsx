@@ -1,9 +1,8 @@
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import React, { useCallback, useRef, useState } from "react";
 import {
   Alert,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
   KeyboardAvoidingView,
@@ -13,7 +12,7 @@ import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { useCreateTransaction, useDashboard } from "../hooks/useDashboard";
 import { useWallets } from "../hooks/useWallets";
 import { styles } from "../styles/AddTransactionStyles";
-import { useCategories, usePaymentMethods } from "../hooks/useCatalog";
+import { useUserCategories } from "../hooks/useUserData";
 import { CategorySheetContent } from "./add-transaction/CategorySheetContent";
 import { PaymentMethodSheetContent } from "./add-transaction/PaymentMethodSheetContent";
 import { TransactionTypeToggle } from "./add-transaction/TransactionTypeToggle";
@@ -22,6 +21,7 @@ import { formatPrettyDate, toLocalDateString } from "./add-transaction/types";
 import type { SelectableItem, SheetType, TransactionType } from "./add-transaction/types";
 import { toast } from "sonner-native";
 import { DatePickerSheet } from "@/src/shared/components/DatePickerSheet";
+import { useUserPaymentMethods } from "../hooks/useUserData";
 
 const TRANSACTION_TYPE_IDS: Record<TransactionType, number> = {
   gasto: 1,
@@ -35,8 +35,8 @@ type Props = {
 export function AddTransactionForm({ onSave }: Props) {
   const { data: summary } = useDashboard();
   const { data: wallets } = useWallets();
-  const { data: paymentMethod } = usePaymentMethods();
-  const { data: categories } = useCategories();
+  const { data: paymentMethod } = useUserPaymentMethods();
+  const { data: categories } = useUserCategories();
   const createTransaction = useCreateTransaction();
   const [sheetType, setSheetType] = useState<SheetType>(null);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
@@ -44,6 +44,7 @@ export function AddTransactionForm({ onSave }: Props) {
   const [type, setType] = useState<TransactionType>("gasto");
   const [amount, setAmount] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<SelectableItem | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<SelectableItem | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SelectableItem | null>(null);
   const [date, setDate] = useState(new Date());
   const [description, setDescription] = useState("");
@@ -67,8 +68,9 @@ export function AddTransactionForm({ onSave }: Props) {
     bottomSheetRef.current?.dismiss();
   };
 
-  const handleSelectCategory = (item: SelectableItem) => {
+  const handleSelectCategory = (item: SelectableItem, subcategory?: SelectableItem | null) => {
     setSelectedCategory(item);
+    setSelectedSubcategory(subcategory ?? null);
     closeSheet();
   };
 
@@ -125,8 +127,8 @@ export function AddTransactionForm({ onSave }: Props) {
         walletId: wallet.id,
         transactionTypeId: TRANSACTION_TYPE_IDS[type],
         categoryId: selectedCategory.id,
-        subcategoryId: null,
-        paymentMethodId: selectedPaymentMethod.id,
+        subcategoryId: selectedSubcategory?.id ?? null,
+        paymentMethodId: selectedPaymentMethod.paymentMethodId ?? selectedPaymentMethod.id,
         currencyId: wallet.currencyId,
         amount: newAmount,
         exchangeRate: null,
@@ -169,7 +171,7 @@ export function AddTransactionForm({ onSave }: Props) {
         <View style={styles.amountCard}>
           <Text style={styles.currency}>{summary?.currencySymbol ?? "C$"}</Text>
 
-          <TextInput
+          <BottomSheetTextInput
             style={styles.amountInput}
             placeholder="0.00"
             placeholderTextColor="#CBD5E1"
@@ -181,6 +183,7 @@ export function AddTransactionForm({ onSave }: Props) {
 
         <TransactionDetailsCard
           categoryName={selectedCategory?.name}
+          subcategoryName={selectedSubcategory?.name}
           paymentMethodName={selectedPaymentMethod?.name}
           dateLabel={formatPrettyDate(date)}
           onPressCategory={() => openSheet("categories")}
@@ -193,7 +196,7 @@ export function AddTransactionForm({ onSave }: Props) {
         <View style={styles.descriptionCard}>
           <Text style={styles.descriptionTitle}>Descripción</Text>
 
-          <TextInput
+          <BottomSheetTextInput
             style={styles.descriptionInput}
             multiline
             numberOfLines={4}
@@ -218,9 +221,11 @@ export function AddTransactionForm({ onSave }: Props) {
 
         <BottomSheetModal
           ref={bottomSheetRef}
-          snapPoints={["60%"]}
+          snapPoints={["25%"]}
           enableDynamicSizing={false}
           enablePanDownToClose={true}
+          keyboardBehavior="extend"
+          keyboardBlurBehavior="restore"
           stackBehavior="push"
           onDismiss={() => setSheetType(null)}
           backdropComponent={renderBackdrop}

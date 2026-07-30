@@ -1,10 +1,11 @@
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
-import React, { useCallback, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Check, ChevronRight, LogOut, Pencil, Trash2, X } from "lucide-react-native";
-import BottomSheet, { BottomSheetBackdrop, BottomSheetFlatList, BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetFlatList, BottomSheetScrollView, BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import { toast } from "sonner-native";
 
+import Constants from "expo-constants";
 import { useAuthStore } from "../stores/auth.store";
 import { usePreferencesStore } from "../stores/preferences.store";
 import { formatCurrency, getApiError, getErrorMessage } from "@/src/shared/utils/common";
@@ -14,8 +15,10 @@ import { registerForPushNotifications } from "../notifications/register";
 import { colors } from "../constants/colors";
 import { useUpdateProfile, useUserProfile } from "../hooks/useUserProfile";
 import { DatePickerSheet } from "@/src/shared/components/DatePickerSheet";
+import { CategorySheetContent } from "./profile/CategorySheetContent";
+import { PaymentMethodSheetContent } from "./profile/PaymentMethodSheetContent";
 
-type SheetType = "languages" | "wallets" | "balanceAlert" | "editProfile" | null;
+type SheetType = "languages" | "wallets" | "balanceAlert" | "editProfile" | "categories" | "paymentMethods" | null;
 
 type MenuRowProps = {
   label: string;
@@ -47,6 +50,24 @@ type MenuSwitchRowProps = {
   disabled?: boolean;
   last?: boolean;
 };
+
+type MenuInfoRowProps = {
+  label: string;
+  info: string;
+  last?: boolean;
+};
+
+function MenuInfoRow({ label, info, last }: MenuInfoRowProps) {
+  return (
+    <View>
+      <View style={styles.menuRow}>
+        <Text style={styles.menuLabel}>{label}</Text>
+        <Text style={styles.menuInfo}>{info}</Text>
+      </View>
+      {!last && <View style={styles.separator} />}
+    </View>
+  );
+}
 
 function MenuSwitchRow({ label, value, onValueChange, disabled, last }: MenuSwitchRowProps) {
   return (
@@ -104,7 +125,19 @@ export default function Profile() {
   const [editEmail, setEditEmail] = useState("");
   const [editPage, setEditPage] = useState<"form" | "date">("form");
 
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const [sheetSnapPoints, setSheetSnapPoints] = useState(["75%"]);
+
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+
+  useEffect(() => {
+    if (!sheetType) return;
+    if (sheetType === "languages" && languages) {
+      setSheetSnapPoints(languages.length < 3 ? ["35%"] : ["75%"]);
+    }
+    if (sheetType === "wallets" && wallets) {
+      setSheetSnapPoints(wallets.length < 3 ? ["35%"] : ["75%"]);
+    }
+  }, [sheetType, languages, wallets]);
 
   const openSheet = (type: SheetType) => {
     if (type === "balanceAlert") {
@@ -120,7 +153,7 @@ export default function Profile() {
       setEditEmail(profile.email ?? "");
     }
     setSheetType(type);
-    bottomSheetRef.current?.expand();
+    bottomSheetRef.current?.present();
   };
 
   const closeWalletForm = () => {
@@ -183,7 +216,7 @@ export default function Profile() {
     try {
       await setBalanceAlertThreshold(threshold);
       toast.success("Alerta de saldo actualizada");
-      bottomSheetRef.current?.close();
+      bottomSheetRef.current?.dismiss();
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -203,7 +236,7 @@ export default function Profile() {
     try {
       await updateProfile.mutateAsync(body);
       toast.success("Perfil actualizado");
-      bottomSheetRef.current?.close();
+      bottomSheetRef.current?.dismiss();
     } catch (error) {
       const apiError = getApiError(error);
       toast.error(apiError.message);
@@ -229,7 +262,7 @@ export default function Profile() {
           try {
             await setLanguage(item.id);
             toast.success("Idioma actualizado");
-            bottomSheetRef.current?.close();
+            bottomSheetRef.current?.dismiss();
           } catch (error) {
             toast.error(getErrorMessage(error));
           } finally {
@@ -346,7 +379,7 @@ export default function Profile() {
     if (isRenaming) {
       return (
         <View style={[styles.sheetItem, styles.sheetItemRenaming]}>
-          <TextInput
+          <BottomSheetTextInput
             style={styles.renameInput}
             value={renameValue}
             onChangeText={setRenameValue}
@@ -424,8 +457,8 @@ export default function Profile() {
       <View style={styles.sectionGroup}>
         <Text style={styles.sectionLabel}>Preferencias</Text>
         <View style={styles.menuCard}>
-          <MenuRow label="Métodos de pago" />
-          <MenuRow label="Categorías" />
+          <MenuRow label="Métodos de pago" onPress={() => openSheet("paymentMethods")} />
+          <MenuRow label="Categorías" onPress={() => openSheet("categories")} />
           <MenuSwitchRow
             label="Notificaciones"
             value={notificationsEnabled ?? false}
@@ -435,6 +468,14 @@ export default function Profile() {
           <MenuRow label="Alerta de saldo" onPress={() => openSheet("balanceAlert")} />
           <MenuRow label="Idiomas" onPress={() => openSheet("languages")} />
           <MenuRow label="Carteras" onPress={() => openSheet("wallets")} last />
+        </View>
+      </View>
+
+      <View style={styles.sectionGroup}>
+        <Text style={styles.sectionLabel}>Soporte</Text>
+        <View style={styles.menuCard}>
+          <MenuRow label="Contactar Soporte" onPress={() => Linking.openURL("mailto:richardrrc1204@gmail.com")} />
+          <MenuInfoRow label="Versión" info={`v${Constants.expoConfig?.version ?? "1.0.0"}`} last />
         </View>
       </View>
 
@@ -452,13 +493,15 @@ export default function Profile() {
       </TouchableOpacity>
       </ScrollView>
 
-      <BottomSheet
+        <BottomSheetModal
         ref={bottomSheetRef}
-        index={-1}
-        snapPoints={["60%"]}
+        snapPoints={sheetSnapPoints}
+        enableDynamicSizing={false}
         enablePanDownToClose={true}
-        onClose={() => {
-          setSheetType(null);
+        keyboardBehavior="extend"
+        keyboardBlurBehavior="restore"
+        onDismiss={() => {
+          setSheetSnapPoints(["75%"]);
           setRenamingWalletId(null);
           closeWalletForm();
         }}
@@ -467,14 +510,14 @@ export default function Profile() {
         {sheetType === "wallets" && walletMode === "create" ? (
           <BottomSheetScrollView contentContainerStyle={styles.createForm}>
             <View style={styles.sheetHeaderRow}>
-              <Text style={styles.sheetTitle}>Nueva cartera</Text>
+              <Text style={[styles.sheetTitle, { paddingHorizontal: 0 }]}>Nueva cartera</Text>
               <TouchableOpacity onPress={closeWalletForm} style={styles.iconButton}>
                 <X size={20} color={colors.textTertiary} strokeWidth={2} />
               </TouchableOpacity>
             </View>
 
             <Text style={styles.fieldLabel}>Nombre</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={styles.textInput}
               placeholder="Ej. Ahorros en dólares"
               placeholderTextColor={colors.textTertiary}
@@ -532,10 +575,10 @@ export default function Profile() {
             />
           </>
         ) : sheetType === "balanceAlert" ? (
-          <View style={styles.createForm}>
-            <Text style={styles.sheetTitle}>Alerta de saldo</Text>
+          <BottomSheetScrollView contentContainerStyle={styles.createForm}>
+            <Text style={[styles.sheetTitle, { paddingHorizontal: 0 }]}>Alerta de saldo</Text>
             <Text style={styles.fieldLabel}>Notificarme cuando mi saldo llegue a</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={styles.textInput}
               placeholder="0.00"
               placeholderTextColor={colors.textTertiary}
@@ -554,13 +597,13 @@ export default function Profile() {
                 <Text style={styles.createButtonText}>Guardar</Text>
               )}
             </TouchableOpacity>
-          </View>
+          </BottomSheetScrollView>
         ) : sheetType === "editProfile" && editPage === "form" ? (
           <BottomSheetScrollView contentContainerStyle={styles.createForm}>
-            <Text style={styles.sheetTitle}>Editar Perfil</Text>
+            <Text style={[styles.sheetTitle, { paddingHorizontal: 0 }]}>Editar Perfil</Text>
                 
             <Text style={styles.fieldLabel}>Nombre</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={styles.textInput}
               placeholder="Nombre"
               placeholderTextColor={colors.textTertiary}
@@ -570,7 +613,7 @@ export default function Profile() {
             />
 
             <Text style={styles.fieldLabel}>Apellido</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={styles.textInput}
               placeholder="Apellido"
               placeholderTextColor={colors.textTertiary}
@@ -585,7 +628,7 @@ export default function Profile() {
             </TouchableOpacity>
 
             <Text style={styles.fieldLabel}>Nombre de Usuario</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={styles.textInput}
               placeholder="Usuario"
               placeholderTextColor={colors.textTertiary}
@@ -596,7 +639,7 @@ export default function Profile() {
             />
 
             <Text style={styles.fieldLabel}>Teléfono</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={styles.textInput}
               placeholder="Número de teléfono"
               placeholderTextColor={colors.textTertiary}
@@ -607,7 +650,7 @@ export default function Profile() {
             />
 
             <Text style={styles.fieldLabel}>Correo Electrónico</Text>
-            <TextInput
+            <BottomSheetTextInput
               style={styles.textInput}
               placeholder="correo@ejemplo.com"
               placeholderTextColor={colors.textTertiary}
@@ -638,6 +681,10 @@ export default function Profile() {
                 title="Fecha de Nacimiento"
                 maximumDate={new Date()}
               />
+          ) : sheetType === "categories" ? (
+            <CategorySheetContent onSnapChange={setSheetSnapPoints} />
+          ) : sheetType === "paymentMethods" ? (
+            <PaymentMethodSheetContent onSnapChange={setSheetSnapPoints} />
           ) : (
             <>
               <Text style={styles.sheetTitle}>Idiomas</Text>
@@ -652,7 +699,7 @@ export default function Profile() {
               />
             </>
           )}
-      </BottomSheet>
+      </BottomSheetModal>
     </SafeAreaView>
   );
 }
@@ -712,6 +759,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textPrimary,
     fontWeight: "500",
+  },
+  menuInfo: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: "400",
   },
   separator: {
     height: StyleSheet.hairlineWidth,

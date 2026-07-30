@@ -5,6 +5,7 @@ export type SheetType = "categories" | "payment-methods" | "date" | null;
 export type SelectableItem = {
   id: number;
   name: string;
+  paymentMethodId?: number;
 };
 
 export function formatPrettyDate(date: Date): string {

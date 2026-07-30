@@ -3,8 +3,9 @@ import React, { useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTransactions } from "../hooks/useDashboard";
 import { formatCurrency } from "@/src/shared/utils/common";
-import { colors } from "../constants/colors";
-import { Car, CircleDollarSign, House, ShoppingCart, UtensilsCrossed, Wallet } from "lucide-react-native";
+import { colors, getContrastColor } from "../constants/colors";
+import { Wallet } from "lucide-react-native";
+import { getIconByKey } from "../constants/iconCatalog";
 
 type TransactionItem = {
   id: number;
@@ -13,17 +14,10 @@ type TransactionItem = {
   transactionDate: string;
   transactionTypeCode: string;
   categoryName: string;
+  subcategoryName: string | null;
   categoryIcon: string;
   categoryColor: string;
   currencySymbol: string;
-};
-
-const iconMap: Record<string, React.ComponentType<any>> = {
-  "shopping-cart": ShoppingCart,
-  car: Car,
-  home: House,
-  food: UtensilsCrossed,
-  salary: CircleDollarSign,
 };
 
 export default function Expenses() {
@@ -41,17 +35,17 @@ export default function Expenses() {
   );
 
   const renderItem = ({ item }: { item: TransactionItem }) => {
-    const Icon = iconMap[item.categoryIcon] ?? ShoppingCart;
+    const Icon = getIconByKey(item.categoryIcon);
     return (
       <View style={styles.transactionCard}>
         <View style={[styles.iconBox, { backgroundColor: item.categoryColor ?? colors.borderLight }]}> 
-          <Icon size={20} color={colors.textPrimary} strokeWidth={1.8} />
+          <Icon size={20} color={getContrastColor(item.categoryColor ?? colors.borderLight)} strokeWidth={1.8} />
         </View>
         <View style={styles.transactionInfo}>
           <Text style={styles.transactionTitle} numberOfLines={2}>
-            {item.description || "Compra"}
+            {item.description || item.categoryName}
           </Text>
-          <Text style={styles.transactionSubtitle}>{item.categoryName}</Text>
+          <Text style={styles.transactionSubtitle}>{item.subcategoryName || item.categoryName}</Text>
           <Text style={styles.transactionDate}>{item.transactionDate}</Text>
         </View>
         <Text style={styles.amountText}>- {formatCurrency(item.amount ?? 0, item.currencySymbol ?? "")}</Text>

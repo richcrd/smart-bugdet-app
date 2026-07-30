@@ -24,14 +24,28 @@ export type CategoryResponse = {
   name: string;
   icon: string;
   color: string;
+  userId: number;
+  isSystem: boolean;
+  transactionTypeId: number;
   subcategories: SubcategoryResponse[]
 }
+
 
 export type SubcategoryResponse = {
   id: number;
   name: string;
   icon: string;
+  userId: number;
+  isSystem: boolean;
 }
+
+export type UserPaymentMethodResponse = {
+  id: number;
+  paymentMethodId: number;
+  name: string;
+  alias: string | null;
+}
+
 
 export const catalogRepository = {
   languages: () => {
@@ -42,11 +56,7 @@ export const catalogRepository = {
     return http.get<CurrencyResponse[]>("/service/catalog/currencies")
   },
 
-  paymentMethods: () => {
+  systemPaymentMethods: () => {
     return http.get<PaymentMethodResponse[]>("/service/catalog/payment-methods")
   },
-
-  categories: () => {
-    return http.get<CategoryResponse[]>("/service/catalog/categories")
-  }
 }
