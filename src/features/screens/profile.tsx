@@ -1,5 +1,5 @@
 import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Check, ChevronRight, Eye, EyeOff, LogOut, Pencil, Trash2, X } from "lucide-react-native";
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetFlatList, BottomSheetScrollView, BottomSheetTextInput } from "@gorhom/bottom-sheet";
@@ -132,22 +132,23 @@ export default function Profile() {
   const [editPhoneNumber, setEditPhoneNumber] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editPage, setEditPage] = useState<"form" | "date">("form");
+  const [sheetKey, setSheetKey] = useState(0);
 
   const [sheetSnapPoints, setSheetSnapPoints] = useState(["75%"]);
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  useEffect(() => {
-    if (!sheetType) return;
-    if (sheetType === "languages" && languages) {
-      setSheetSnapPoints(languages.length < 3 ? ["35%"] : ["75%"]);
-    }
-    if (sheetType === "wallets" && wallets) {
-      setSheetSnapPoints(wallets.length < 3 ? ["35%"] : ["75%"]);
-    }
-  }, [sheetType, languages, wallets]);
-
   const openSheet = (type: SheetType) => {
+
+    setSheetKey((k) => k + 1);
+    if (type === "languages") {
+      setSheetSnapPoints(languages && languages.length < 3 ? ["35%"] : ["75%"]);
+    } else if (type === "wallets") {
+      setSheetSnapPoints(wallets && wallets.length < 3 ? ["35%"] : ["75%"]);
+    } else {
+      setSheetSnapPoints(["75%"])
+    }
+
     if (type === "balanceAlert") {
       setBalanceAlertInput(balanceAlertThreshold?.toString() ?? "");
     }
@@ -535,6 +536,7 @@ export default function Profile() {
         }}
         backdropComponent={renderBackdrop}
       >
+        <View key={`${sheetType}-${sheetKey}`} style={{ flex: 1 }}>
         {sheetType === "wallets" && walletMode === "create" ? (
           <BottomSheetScrollView contentContainerStyle={styles.createForm}>
             <View style={styles.sheetHeaderRow}>
@@ -772,6 +774,7 @@ export default function Profile() {
               />
             </>
           )}
+        </View>
       </BottomSheetModal>
     </SafeAreaView>
   );
